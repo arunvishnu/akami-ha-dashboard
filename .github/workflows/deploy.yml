@@ -24,6 +24,9 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_HA_URL: ${{ secrets.VITE_HA_URL }}
+          VITE_HA_TOKEN: ${{ secrets.VITE_HA_TOKEN }}
 
       - name: Deploy to deploy branch
         uses: peaceiris/actions-gh-pages@v4
