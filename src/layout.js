@@ -164,11 +164,27 @@ export const FLOOR_ROOMS = Object.entries(ROOMS).reduce((acc, [id, room]) => {
 
 // Entities used in the Home tab
 export const HOME_ENTITIES = {
-  weather:   'weather.openweathermap',
-  climate:   ['climate.first_floor', 'climate.second_floor'],
+  weather:  'weather.openweathermap',
+  climate:  ['climate.first_floor', 'climate.second_floor'],
+  people:   ['person.arun', 'person.admin'],
   occupancy: Object.entries(ROOMS)
     .filter(([, r]) => r.entities.occupancy)
     .map(([id, r]) => ({ roomId: id, label: r.label, entity: r.entities.occupancy })),
-  allLights: [...new Set(Object.values(ROOMS).flatMap(r => r.entities.lights || []))],
+  quickLights: [
+    { label: 'Family Room', entityId: 'light.family_room',  icon: '🛋️', domain: 'light' },
+    { label: 'Kitchen',     entityId: 'light.kitchen',      icon: '🍳', domain: 'light' },
+    { label: 'Outdoor',     entityId: 'light.outdoor',      icon: '🌿', domain: 'light' },
+    { label: 'Office',      entityId: 'light.office',       icon: '💼', domain: 'light' },
+  ],
+  homeScenes: [
+    'scene.family_room_bright',
+    'scene.family_room_concentrate',
+    'scene.family_room_relax',
+    'scene.family_room_dimmed',
+    'scene.family_room_nightlight',
+    'scene.family_room_energize',
+    'scene.family_room_arctic_aurora',
+  ],
+  allLights:   [...new Set(Object.values(ROOMS).flatMap(r => r.entities.lights   || []))],
   allSwitches: [...new Set(Object.values(ROOMS).flatMap(r => r.entities.switches || []))],
 }

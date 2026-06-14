@@ -1,162 +1,222 @@
+import { useState, useEffect } from 'react'
 import { useHA } from '../../hooks/useHA'
-import { HOME_ENTITIES, ROOMS } from '../../layout'
-import { ClimateCard } from '../ClimateCard'
+import { HOME_ENTITIES } from '../../layout'
 
-function WeatherWidget() {
+// ── Clock ─────────────────────────────────────────────────────────────
+
+function Clock() {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  const date = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  return (
+    <div className="ht-clock">
+      <div className="ht-clock-time">{time}</div>
+      <div className="ht-clock-date">{date}</div>
+    </div>
+  )
+}
+
+// ── Weather ───────────────────────────────────────────────────────────
+
+const CONDITION_ICONS = {
+  'sunny': '☀️', 'clear-night': '🌙', 'cloudy': '☁️', 'partlycloudy': '⛅',
+  'rainy': '🌧️', 'pouring': '🌧️', 'snowy': '❄️', 'lightning': '⛈️',
+  'lightning-rainy': '⛈️', 'fog': '🌫️', 'windy': '💨', 'hail': '🌨️',
+}
+
+function Weather() {
   const { states } = useHA()
-  const w = states[HOME_ENTITIES.weather]
+  const w     = states[HOME_ENTITIES.weather]
+  const temp  = states['sensor.openweathermap_temperature']
+  const hum   = states['sensor.openweathermap_humidity']
+  const wind  = states['sensor.openweathermap_wind_speed']
   if (!w) return null
 
-  const temp = states['sensor.openweathermap_temperature']
-  const condition = w.attributes?.friendly_name ? w.state : w.state
-  const humidity = states['sensor.openweathermap_humidity']
-  const wind = states['sensor.openweathermap_wind_speed']
-
-  const CONDITION_ICONS = {
-    'sunny': '☀️', 'clear-night': '🌙', 'cloudy': '☁️',
-    'partlycloudy': '⛅', 'rainy': '🌧️', 'snowy': '❄️',
-    'lightning': '⛈️', 'lightning-rainy': '⛈️', 'fog': '🌫️',
-    'windy': '💨', 'hail': '🌨️', 'pouring': '🌧️',
-  }
-  const icon = CONDITION_ICONS[w.state] || '🌤️'
-  const unit = temp?.attributes?.unit_of_measurement || '°'
+  const icon  = CONDITION_ICONS[w.state] || '🌤️'
+  const unit  = temp?.attributes?.unit_of_measurement || '°'
+  const label = w.state.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
   return (
-    <div className="home-weather">
-      <div className="weather-main">
-        <span className="weather-icon">{icon}</span>
-        <div>
-          <div className="weather-temp">{temp?.state}{unit}</div>
-          <div className="weather-condition">{w.state.replace(/-/g, ' ')}</div>
-        </div>
+    <div className="ht-weather">
+      <span className="ht-weather-icon">{icon}</span>
+      <div className="ht-weather-info">
+        <div className="ht-weather-temp">{temp?.state}{unit}</div>
+        <div className="ht-weather-label">{label}</div>
       </div>
-      <div className="weather-details">
-        {humidity && <span>💧 {humidity.state}%</span>}
+      <div className="ht-weather-meta">
+        {hum  && <span>💧 {hum.state}%</span>}
         {wind && <span>💨 {wind.state} {wind.attributes?.unit_of_measurement}</span>}
       </div>
     </div>
   )
 }
 
-function OccupancyOverview() {
+// ── Climate strip ─────────────────────────────────────────────────────
+
+function ClimateStrip() {
+  const { states } = useHA()
+  const LABELS = { first_floor: '1st Floor', second_floor: '2nd Floor' }
+  return (
+    <div className="ht-climate-strip">
+      {HOME_ENTITIES.climate.map((id) => {
+        const e = states[id]
+        if (!e) return null
+        const key   = id.replace('climate.', '')
+        const cur   = e.attributes?.current_temperature
+        const tgt   = e.attributes?.temperature
+        const unit  = e.attributes?.temperature_unit || '°'
+        return (
+          <div key={id} className="ht-climate-chip">
+            <span className="ht-climate-label">{LABELS[key] || key}</span>
+            <span className="ht-climate-cur">{cur}{unit}</span>
+            {tgt && <span className="ht-climate-tgt">→ {tgt}{unit}</span>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── People ────────────────────────────────────────────────────────────
+
+function People() {
+  const { states } = useHA()
+  return (
+    <div className="ht-section">
+      <div className="ht-section-label">Who's Home</div>
+      <div className="ht-people">
+        {HOME_ENTITIES.people.map((id) => {
+          const e = states[id]
+          const isHome = e?.state === 'home'
+          const name   = e?.attributes?.friendly_name || id.replace('person.', '')
+          return (
+            <div key={id} className={`ht-person ${isHome ? 'home' : 'away'}`}>
+              <span className={`ht-person-dot ${isHome ? 'home' : 'away'}`} />
+              <span className="ht-person-name">{name}</span>
+              <span className="ht-person-status">{isHome ? 'Home' : 'Away'}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Occupancy ─────────────────────────────────────────────────────────
+
+function Occupancy() {
   const { states } = useHA()
   const rooms = HOME_ENTITIES.occupancy
-
   return (
-    <div className="occupancy-grid">
-      {rooms.map(({ roomId, label, entity }) => {
-        const isOn = states[entity]?.state === 'on'
-        return (
-          <div key={roomId} className={`occupancy-chip ${isOn ? 'occupied' : ''}`}>
-            <span className={`occupancy-dot ${isOn ? 'occupied' : 'vacant'}`} />
-            {label}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function ActiveMedia() {
-  const { states } = useHA()
-  const mediaRooms = Object.entries(ROOMS).filter(([, r]) => r.entities.media)
-  const active = mediaRooms.filter(([, r]) => {
-    const s = states[r.entities.media]?.state
-    return s === 'playing' || s === 'paused'
-  })
-
-  if (active.length === 0) return <div className="home-empty-state">Nothing playing</div>
-
-  return (
-    <div className="active-media-list">
-      {active.map(([roomId, room]) => {
-        const entity = states[room.entities.media]
-        const title = entity?.attributes?.media_title
-        const artist = entity?.attributes?.media_artist
-        const isPlaying = entity?.state === 'playing'
-        return (
-          <div key={roomId} className="active-media-row">
-            <span className="room-icon">{room.icon}</span>
-            <div className="active-media-info">
-              <div className="active-media-room">{room.label}</div>
-              {title && <div className="active-media-title">{title}{artist ? ` · ${artist}` : ''}</div>}
+    <div className="ht-section">
+      <div className="ht-section-label">Rooms</div>
+      <div className="ht-occupancy">
+        {rooms.map(({ roomId, label, entity }) => {
+          const on = states[entity]?.state === 'on'
+          return (
+            <div key={roomId} className={`ht-occ-chip ${on ? 'occupied' : ''}`}>
+              <span className={`occupancy-dot ${on ? 'occupied' : 'vacant'}`} />
+              {label}
             </div>
-            <span className="active-media-state">{isPlaying ? '▶️' : '⏸️'}</span>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function QuickControls() {
-  const { callService } = useHA()
+// ── Quick lights ──────────────────────────────────────────────────────
 
-  const allLightsOff = () => {
-    HOME_ENTITIES.allLights.forEach((id) =>
-      callService('light', 'turn_off', { entity_id: id })
-    )
+function QuickLights() {
+  const { states, callService } = useHA()
+  const allOff = () => {
+    HOME_ENTITIES.allLights.forEach(id => callService('light', 'turn_off', { entity_id: id }))
+    HOME_ENTITIES.allSwitches.forEach(id => callService('switch', 'turn_off', { entity_id: id }))
   }
-
-  const allSwitchesOff = () => {
-    HOME_ENTITIES.allSwitches.forEach((id) =>
-      callService('switch', 'turn_off', { entity_id: id })
-    )
-  }
-
-  const goodNight = () => {
-    allLightsOff()
-    allSwitchesOff()
-  }
-
   return (
-    <div className="quick-controls">
-      <button className="quick-btn" onClick={allLightsOff}>
-        <span>💡</span> All Lights Off
-      </button>
-      <button className="quick-btn" onClick={allSwitchesOff}>
-        <span>🔌</span> All Switches Off
-      </button>
-      <button className="quick-btn danger" onClick={goodNight}>
-        <span>🌙</span> Good Night
-      </button>
+    <div className="ht-section">
+      <div className="ht-section-label">Lights</div>
+      <div className="ht-quick-lights">
+        {HOME_ENTITIES.quickLights.map(({ label, entityId, icon, domain }) => {
+          const isOn = states[entityId]?.state === 'on'
+          return (
+            <button
+              key={entityId}
+              className={`ht-light-btn ${isOn ? 'on' : 'off'}`}
+              onClick={() => callService(domain, 'toggle', { entity_id: entityId })}
+            >
+              <span className="ht-light-icon">{icon}</span>
+              <span className="ht-light-label">{label}</span>
+              <div className={`toggle-switch ${isOn ? 'on' : 'off'}`} />
+            </button>
+          )
+        })}
+        <button className="ht-light-btn all-off" onClick={allOff}>
+          <span className="ht-light-icon">🌙</span>
+          <span className="ht-light-label">All Off</span>
+        </button>
+      </div>
     </div>
   )
 }
+
+// ── Scene strip ───────────────────────────────────────────────────────
+
+function sceneLabel(id) {
+  return id
+    .replace('scene.family_room_', '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function SceneStrip() {
+  const { states, callService } = useHA()
+  const scenes = HOME_ENTITIES.homeScenes.filter(s => states[s])
+  if (scenes.length === 0) return null
+  return (
+    <div className="ht-scene-strip">
+      <div className="ht-scene-strip-label">Family Room</div>
+      <div className="ht-scene-buttons">
+        {scenes.map(s => (
+          <button
+            key={s}
+            className="ht-scene-btn"
+            onClick={() => callService('scene', 'turn_on', { entity_id: s })}
+          >
+            {sceneLabel(s)}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Home tab ──────────────────────────────────────────────────────────
 
 export function HomeTab() {
   return (
     <div className="home-tab">
-      <div className="home-grid">
-        <div className="home-section wide">
-          <div className="home-section-title">Weather</div>
-          <WeatherWidget />
-        </div>
+      <div className="ht-status-bar">
+        <Clock />
+        <Weather />
+        <ClimateStrip />
+      </div>
 
-        <div className="home-section">
-          <div className="home-section-title">Climate</div>
-          <div className="detail-cards">
-            {HOME_ENTITIES.climate.map((id) => (
-              <ClimateCard key={id} entityId={id} />
-            ))}
-          </div>
+      <div className="ht-main">
+        <div className="ht-left">
+          <People />
+          <Occupancy />
         </div>
-
-        <div className="home-section">
-          <div className="home-section-title">Occupancy</div>
-          <OccupancyOverview />
-        </div>
-
-        <div className="home-section">
-          <div className="home-section-title">Now Playing</div>
-          <ActiveMedia />
-        </div>
-
-        <div className="home-section">
-          <div className="home-section-title">Quick Controls</div>
-          <QuickControls />
+        <div className="ht-right">
+          <QuickLights />
         </div>
       </div>
+
+      <SceneStrip />
     </div>
   )
 }
