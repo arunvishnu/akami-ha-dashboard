@@ -20,7 +20,7 @@ function SectionTitle({ children }) {
 export function RoomDetail({ roomId, onClose }) {
   const { states, callService } = useHA()
   const room = ROOMS[roomId]
-  const { lights = [], fan, temperature, occupancy, media, switches = [], scenes = [] } = room.entities
+  const { lights = [], fan, temperature, occupancy, media, switches = [], scenes = [], sensors = [] } = room.entities
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -110,6 +110,17 @@ export function RoomDetail({ roomId, onClose }) {
               <SectionTitle>Media</SectionTitle>
               <div className="detail-cards">
                 <MediaCard entityId={media} />
+              </div>
+            </div>
+          )}
+
+          {sensors.length > 0 && (
+            <div className="detail-section">
+              <SectionTitle>Sensors</SectionTitle>
+              <div className="detail-cards">
+                {sensors.map((id) => (
+                  <EntityCard key={id} entityId={id} />
+                ))}
               </div>
             </div>
           )}

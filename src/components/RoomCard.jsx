@@ -4,7 +4,7 @@ import { ROOMS } from '../layout'
 export function RoomCard({ roomId, onClick }) {
   const { states } = useHA()
   const room = ROOMS[roomId]
-  const { lights = [], fan, temperature, occupancy, media, switches = [] } = room.entities
+  const { lights = [], fan, temperature, occupancy, media, switches = [], sensors = [] } = room.entities
 
   const lightsOn = lights.filter((id) => states[id]?.state === 'on').length
   const switchesOn = switches.filter((id) => states[id]?.state === 'on').length
@@ -54,6 +54,17 @@ export function RoomCard({ roomId, onClick }) {
             <span className="stat-text-clip">{mediaTitle || 'Playing'}</span>
           </div>
         )}
+        {sensors.slice(0, 2).map((id) => {
+          const e = states[id]
+          if (!e) return null
+          const unit = e.attributes?.unit_of_measurement || ''
+          const name = (e.attributes?.friendly_name || id).split(' ').pop()
+          return (
+            <div key={id} className="room-stat">
+              <span className="stat-text-clip">{name}: {e.state}{unit}</span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

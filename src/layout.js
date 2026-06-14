@@ -3,6 +3,7 @@ export const FLOORS = [
   { id: 'first_floor',  label: '1st Floor', icon: '🪜' },
   { id: 'second_floor', label: '2nd Floor', icon: '🛏️' },
   { id: 'outdoor',      label: 'Outdoor',   icon: '🌿' },
+  { id: 'basement',     label: 'Basement',  icon: '🏚️' },
 ]
 
 export const ROOMS = {
@@ -101,6 +102,19 @@ export const ROOMS = {
     entities: {
       lights: ['light.guestbedroom_light'],
       fan:    'fan.guestbedroom_fan',
+    },
+  },
+
+  // ── Basement ─────────────────────────────────────────
+  basement_main: {
+    label: 'Basement', icon: '🏚️', floor: 'basement',
+    entities: {
+      sensors: [
+        'sensor.airthings_basement_airthings_temperature',
+        'sensor.airthings_basement_airthings_humidity',
+        'sensor.airthings_basement_airthings_radon',
+        'sensor.airthings_basement_airthings_radon_long_term',
+      ],
     },
   },
 
