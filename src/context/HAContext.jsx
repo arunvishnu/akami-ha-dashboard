@@ -24,11 +24,13 @@ export function HAProvider({ children }) {
     return false
   }, [])
 
-  const callService = useCallback((domain, service, serviceData = {}) => {
+  const callService = useCallback((domain, service, serviceData = {}, { returnResponse = false } = {}) => {
     const id = msgIdRef.current++
     return new Promise((resolve, reject) => {
       pendingRef.current[id] = { resolve, reject }
-      const sent = send({ id, type: 'call_service', domain, service, service_data: serviceData })
+      const msg = { id, type: 'call_service', domain, service, service_data: serviceData }
+      if (returnResponse) msg.return_response = true
+      const sent = send(msg)
       if (!sent) {
         delete pendingRef.current[id]
         reject(new Error('WebSocket not connected'))

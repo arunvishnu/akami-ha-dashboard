@@ -66,15 +66,17 @@ function Weather() {
   const unit  = temp?.attributes?.unit_of_measurement || '°'
   const label = w.state.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
+  const r = (v) => v != null ? Math.round(parseFloat(v)) : null
+
   return (
     <div className="flex items-center gap-3 min-w-0">
       <span className="text-3xl leading-none">{icon}</span>
       <div className="min-w-0">
-        <div className="text-xl font-bold tabular-nums">{temp?.state}{unit}</div>
+        <div className="text-xl font-bold tabular-nums">{r(temp?.state)}{unit}</div>
         <div className="text-xs text-muted-foreground">{label}</div>
         <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
-          {hum  && <span>💧 {hum.state}%</span>}
-          {wind && <span>💨 {wind.state} {wind.attributes?.unit_of_measurement}</span>}
+          {hum  && <span>💧 {r(hum.state)}%</span>}
+          {wind && <span>💨 {r(wind.state)} {wind.attributes?.unit_of_measurement}</span>}
         </div>
       </div>
     </div>
