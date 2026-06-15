@@ -1,29 +1,28 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:           #08080f;
-  --surface:      rgba(255, 255, 255, 0.04);
-  --surface-hover:rgba(255, 255, 255, 0.07);
-  --border:       rgba(255, 255, 255, 0.08);
+  --bg:           #0b0b14;
+  --surface:      #161622;
+  --surface-hover:#1d1d2a;
+  --border:       rgba(255, 255, 255, 0.07);
   --accent:       #818cf8;
   --accent-glow:  rgba(129, 140, 248, 0.2);
   --on-color:     #f59e0b;
-  --on-glow:      rgba(245, 158, 11, 0.18);
+  --on-glow:      rgba(245, 158, 11, 0.2);
   --text:         #eeeef8;
-  --text-muted:   #6868a0;
+  --text-muted:   #6060a0;
   --radius:       16px;
   --font:         'Inter', system-ui, sans-serif;
-  --glass:        rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --shadow-sm:    0 2px 12px rgba(0, 0, 0, 0.4);
-  --shadow-md:    0 4px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm:    0 2px 16px rgba(0, 0, 0, 0.4);
+  --shadow-md:    0 4px 28px rgba(0, 0, 0, 0.5);
+  --inset-shine:  inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 body {
-  background: var(--bg);
+  background: #0b0b14;
   background-image:
-    radial-gradient(ellipse at 15% 0%,   rgba(99, 102, 241, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 100%, rgba(245, 158, 11, 0.05) 0%, transparent 55%);
+    radial-gradient(ellipse 700px 500px at 0% 0%,   rgba(99, 102, 241, 0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at 100% 100%, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
   background-attachment: fixed;
   color: var(--text);
   font-family: var(--font);
@@ -41,10 +40,8 @@ body {
 }
 
 .setup-card {
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 40px;
   width: 100%;
@@ -240,10 +237,8 @@ body {
 
 /* ── Entity card (generic) ── */
 .entity-card {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 16px;
@@ -260,9 +255,9 @@ body {
 .entity-card.toggleable:active { transform: scale(0.97); }
 
 .entity-card.state-on {
+  background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, var(--surface) 100%);
   border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 0 20px var(--on-glow), inset 0 1px 0 rgba(245,158,11,0.1);
-  background: rgba(245, 158, 11, 0.06);
+  box-shadow: 0 0 24px rgba(245,158,11,0.18), var(--inset-shine);
 }
 
 .entity-card.unavailable { opacity: 0.45; }
@@ -320,10 +315,8 @@ body {
 
 /* ── Light card ── */
 .light-card {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius);
   padding: 16px;
@@ -767,10 +760,8 @@ body {
    ROOM CARD
 ══════════════════════════════════════════ */
 .room-card {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius);
   padding: 16px;
@@ -1106,10 +1097,8 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px 24px;
   box-shadow: var(--shadow-md);
@@ -1199,10 +1188,8 @@ body {
 
 /* Section wrapper */
 .ht-section {
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 14px 16px;
@@ -1254,7 +1241,7 @@ body {
 .ht-person-avatar.away {
   background: rgba(255,255,255,0.04);
   color: var(--text-muted);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
 }
 
 .ht-person-name   { font-size: 0.95rem; font-weight: 500; flex: 1; }
@@ -1294,7 +1281,7 @@ body {
   align-items: center;
   gap: 10px;
   background: rgba(255,255,255,0.03);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px 16px;
   cursor: pointer;
@@ -1309,11 +1296,12 @@ body {
 .ht-light-btn:active { transform: scale(0.97); }
 
 .ht-light-btn.on {
-  border-color: rgba(245,158,11,0.45);
-  box-shadow: 0 0 24px rgba(245,158,11,0.15), inset 0 1px 0 rgba(245,158,11,0.15);
-  background: rgba(245,158,11,0.08);
+  background: linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.06) 100%);
+  border-color: rgba(245,158,11,0.5);
+  box-shadow: 0 0 32px rgba(245,158,11,0.2), var(--inset-shine);
 }
 .ht-light-btn.on .ht-light-label { color: #fbbf24; }
+.ht-light-btn.on .ht-light-icon  { filter: drop-shadow(0 0 6px rgba(245,158,11,0.6)); }
 
 .ht-light-btn.all-off {
   grid-column: 1 / -1;
@@ -1332,10 +1320,8 @@ body {
 
 /* ── Scene strip ── */
 .ht-scene-strip {
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius);
   padding: 12px 16px;
@@ -1365,7 +1351,7 @@ body {
 
 .ht-scene-btn {
   background: rgba(255,255,255,0.04);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   border-radius: 20px;
   color: var(--text);
   font-family: var(--font);
