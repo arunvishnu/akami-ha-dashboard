@@ -4,6 +4,17 @@ import { TabBar } from './TabBar'
 import { HomeTab } from './tabs/HomeTab'
 import { FloorTab } from './tabs/FloorTab'
 
+const RAW_BUILD_TIME = import.meta.env.VITE_BUILD_TIME
+
+function buildLabel() {
+  if (!RAW_BUILD_TIME) return 'dev'
+  const d = new Date(RAW_BUILD_TIME)
+  return d.toLocaleString('en-US', {
+    month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  })
+}
+
 export function Dashboard({ onReset }) {
   const { connectionStatus } = useHA()
   const [activeTab, setActiveTab] = useState('home')
@@ -21,7 +32,10 @@ export function Dashboard({ onReset }) {
           <span className={`status-dot ${statusDot}`} title={connectionStatus} />
           <h1 className="dashboard-title">Home</h1>
         </div>
-        <button className="header-btn subtle" onClick={onReset}>⚙️</button>
+        <div className="build-info" title="Click to reset credentials" onClick={onReset}>
+          <span className="build-info-icon">ⓘ</span>
+          <span className="build-info-text">Built {buildLabel()}</span>
+        </div>
       </header>
 
       <TabBar active={activeTab} onChange={setActiveTab} />

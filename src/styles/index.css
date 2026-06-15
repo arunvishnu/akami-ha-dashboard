@@ -167,6 +167,22 @@ body {
 .header-btn.active { background: var(--accent); border-color: var(--accent); }
 .header-btn.subtle { background: transparent; border-color: transparent; }
 
+.build-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.build-info:hover { color: var(--text); border-color: var(--border); }
+.build-info-icon  { font-size: 0.9rem; opacity: 0.6; }
+.build-info-text  { letter-spacing: 0.01em; }
+
 .add-entity-row {
   display: flex;
   gap: 6px;
