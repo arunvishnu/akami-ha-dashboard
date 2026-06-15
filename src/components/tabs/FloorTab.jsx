@@ -8,8 +8,8 @@ export function FloorTab({ floorId }) {
   const rooms = FLOOR_ROOMS[floorId] || []
 
   return (
-    <div className="floor-tab">
-      <div className="room-grid">
+    <div className="p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {rooms.map((roomId) => (
           <RoomCard
             key={roomId}
