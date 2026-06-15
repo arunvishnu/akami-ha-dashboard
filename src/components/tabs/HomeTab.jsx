@@ -4,6 +4,14 @@ import { HOME_ENTITIES } from '../../layout'
 
 // ── Clock ─────────────────────────────────────────────────────────────
 
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  if (h < 21) return 'Good evening'
+  return 'Good night'
+}
+
 function Clock() {
   const [now, setNow] = useState(new Date())
   useEffect(() => {
@@ -14,6 +22,7 @@ function Clock() {
   const date = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   return (
     <div className="ht-clock">
+      <div className="ht-greeting">{greeting()}</div>
       <div className="ht-clock-time">{time}</div>
       <div className="ht-clock-date">{date}</div>
     </div>
@@ -95,9 +104,11 @@ function People() {
           const name   = e?.attributes?.friendly_name || id.replace('person.', '')
           return (
             <div key={id} className={`ht-person ${isHome ? 'home' : 'away'}`}>
-              <span className={`ht-person-dot ${isHome ? 'home' : 'away'}`} />
+              <div className={`ht-person-avatar ${isHome ? 'home' : 'away'}`}>
+                {name.charAt(0).toUpperCase()}
+              </div>
               <span className="ht-person-name">{name}</span>
-              <span className="ht-person-status">{isHome ? 'Home' : 'Away'}</span>
+              <span className="ht-person-status">{isHome ? '● Home' : '○ Away'}</span>
             </div>
           )
         })}
