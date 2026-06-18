@@ -4,6 +4,7 @@ import { TabBar } from './TabBar'
 import { HomeTab } from './tabs/HomeTab'
 import { FloorTab } from './tabs/FloorTab'
 import { WeatherTab } from './tabs/WeatherTab'
+import { ClimateTab } from './tabs/ClimateTab'
 import { cn } from '../lib/utils'
 
 const RAW_BUILD_TIME = import.meta.env.VITE_BUILD_TIME
@@ -48,7 +49,8 @@ export function Dashboard({ onReset }) {
       <main className="flex-1 overflow-y-auto min-h-0">
         {activeTab === 'home'    && <HomeTab />}
         {activeTab === 'weather' && <WeatherTab />}
-        {activeTab !== 'home' && activeTab !== 'weather' && <FloorTab floorId={activeTab} />}
+        {activeTab === 'climate' && <ClimateTab />}
+        {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && <FloorTab floorId={activeTab} />}
       </main>
     </div>
   )
