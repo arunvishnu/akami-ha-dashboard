@@ -51,26 +51,36 @@ function DotRing({ target, targetHigh, targetLow, mode, action, minT, maxT, onDo
   const lowAngle  =  isHeatCool && targetLow != null ? tempToAngle(targetLow,  minT, maxT) : null
   const highAngle =  isHeatCool && targetHigh!= null ? tempToAngle(targetHigh, minT, maxT) : null
 
+  const isHeating = action === 'heating'
+  const isCooling = action === 'cooling'
+  const isActive  = isHeating || isCooling
+
   const dots = Array.from({ length: N }, (_, i) => {
     const t   = i / (N - 1)
     const deg = START + t * SWEEP
     const [x, y] = polar(deg)
 
-    let opacity
-    if (isOff) {
-      opacity = 0.12
-    } else if (isHeatCool) {
-      opacity = lowAngle != null && highAngle != null
-        ? (deg >= lowAngle && deg <= highAngle ? 1 : 0.22)
-        : 0.4
+    let inZone = false
+    if (isHeatCool) {
+      inZone = lowAngle != null && highAngle != null && deg >= lowAngle && deg <= highAngle
     } else {
-      opacity = setAngle != null ? (deg <= setAngle ? 1 : 0.22) : 0.4
+      inZone = setAngle != null && deg <= setAngle
     }
 
-    return { x: x.toFixed(1), y: y.toFixed(1), color: dotColor(t), opacity }
+    // Active state: override dot color to solid action color
+    let color
+    if (isActive && inZone) {
+      color = isHeating ? '#f97316' : '#3b82f6'
+    } else {
+      color = dotColor(t)
+    }
+
+    const opacity = isOff ? 0.12 : inZone ? 1 : 0.22
+
+    return { x: x.toFixed(1), y: y.toFixed(1), color, opacity }
   })
 
-  const actionColor = action === 'heating' ? '#f97316' : action === 'cooling' ? '#3b82f6' : '#555'
+  const actionColor = isHeating ? '#f97316' : isCooling ? '#3b82f6' : '#555'
 
   return (
     <div className="relative mx-auto" style={{ width: SZ, height: SZ }}>
@@ -78,13 +88,14 @@ function DotRing({ target, targetHigh, targetLow, mode, action, minT, maxT, onDo
         {dots.map((d, i) => (
           <circle key={i} cx={d.x} cy={d.y} r={DOT_R} fill={d.color} opacity={d.opacity} />
         ))}
-        {/* Subtle action label inside top of ring */}
+        {/* Action label inside ring */}
         <text
           x={CX} y={CY - 50}
-          textAnchor="middle" fontSize="9.5" fontFamily="system-ui"
-          letterSpacing="0.14em" fill={actionColor}
+          textAnchor="middle" fontSize="10" fontFamily="system-ui"
+          letterSpacing="0.14em" fontWeight={isActive ? '600' : '400'}
+          fill={isActive ? actionColor : '#555'}
         >
-          {ACTION_LABEL[action] || ''}
+          {ACTION_LABEL[action] || 'IDLE'}
         </text>
         {/* Min / max temp labels */}
         {(() => {
@@ -169,7 +180,11 @@ function ClimateCard({ entityId }) {
   const maxT         = a.max_temp ?? 92
   const name         = a.friendly_name || entityId
   const isHeatCool   = mode === 'heat_cool'
-  const actionColor  = action === 'heating' ? 'text-orange-400' : action === 'cooling' ? 'text-blue-400' : 'text-muted-foreground'
+  const isHeating    = action === 'heating'
+  const isCooling    = action === 'cooling'
+  const isActive     = isHeating || isCooling
+  const actionColor  = isHeating ? 'text-orange-400' : isCooling ? 'text-blue-400' : 'text-muted-foreground'
+  const actionBorder = isHeating ? '#f97316' : isCooling ? '#3b82f6' : undefined
 
   const svc = (service, data) => callService('climate', service, { entity_id: entityId, ...data })
 
@@ -181,20 +196,33 @@ function ClimateCard({ entityId }) {
   const setPreset = (p) => svc('set_preset_mode', { preset_mode: p })
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4">
+    <div
+      className="bg-card rounded-2xl p-5 flex flex-col gap-4 border transition-colors"
+      style={{ borderColor: actionBorder ?? 'hsl(var(--border))' }}
+    >
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Thermostat</div>
           <div className="text-base font-semibold mt-0.5">{name}</div>
         </div>
-        <div className="text-right">
+        <div className="text-right flex flex-col items-end gap-2">
           <div className="text-4xl font-bold tabular-nums leading-none">
             {current != null ? Math.round(current) : '--'}°
           </div>
-          <div className={cn('text-xs font-medium mt-1', actionColor)}>
-            {action ? action.charAt(0).toUpperCase() + action.slice(1) : 'Idle'}
-          </div>
+          {isActive ? (
+            <div
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{ backgroundColor: `${actionBorder}22`, color: actionBorder }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: actionBorder }} />
+              {isHeating ? 'Heating' : 'Cooling'}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">
+              {action === 'off' ? 'Off' : 'Idle'}
+            </div>
+          )}
         </div>
       </div>
 
