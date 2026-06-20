@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SkipBack, SkipForward, Play, Pause, Volume1, Volume2, Music, Tv } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Volume1, Volume2, Music, Tv, Power } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { MEDIA_PLAYERS } from '../../layout'
 import { Card } from '../ui/card'
@@ -54,6 +54,24 @@ function CollapsedPlayer({ player, entity, onExpand }) {
           {isPlaying ? <Pause size={14} /> : <Play size={14} />}
         </button>
       )}
+      {player.remote && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            const isOff = ['off', 'standby', 'unavailable'].includes(state)
+            callService('remote', isOff ? 'turn_on' : 'turn_off', { entity_id: player.remote })
+          }}
+          className={cn(
+            'h-8 w-8 flex items-center justify-center rounded-lg transition-colors shrink-0',
+            ['off', 'standby', 'unavailable'].includes(state)
+              ? 'bg-secondary text-muted-foreground hover:text-foreground'
+              : 'bg-on/15 text-on hover:bg-on/25'
+          )}
+          title="Power"
+        >
+          <Power size={14} />
+        </button>
+      )}
     </Card>
   )
 }
@@ -75,18 +93,34 @@ function ExpandedPlayer({ player, entity, onCollapse }) {
   return (
     <Card className={cn('overflow-hidden border-on/30', isPlaying && 'bg-on/[0.03]')}>
       {/* Header row */}
-      <button
-        onClick={onCollapse}
-        className="flex items-center gap-3 px-4 pt-4 pb-3 w-full text-left hover:opacity-80 transition-opacity"
-      >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-base">
-          {isTv ? <Tv size={16} className="text-muted-foreground" /> : player.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold">{player.label}</div>
-        </div>
-        <Statebadge state={state} />
-      </button>
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+        <button onClick={onCollapse} className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-base">
+            {isTv ? <Tv size={16} className="text-muted-foreground" /> : player.icon}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold">{player.label}</div>
+          </div>
+          <Statebadge state={state} />
+        </button>
+        {player.remote && (
+          <button
+            onClick={() => {
+              const isOff = ['off', 'standby', 'unavailable'].includes(state)
+              callService('remote', isOff ? 'turn_on' : 'turn_off', { entity_id: player.remote })
+            }}
+            className={cn(
+              'h-8 w-8 flex items-center justify-center rounded-lg transition-colors shrink-0',
+              ['off', 'standby', 'unavailable'].includes(state)
+                ? 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/70'
+                : 'bg-on/15 text-on hover:bg-on/25'
+            )}
+            title="Power"
+          >
+            <Power size={14} />
+          </button>
+        )}
+      </div>
 
       {/* Album art + track info */}
       <div className="flex gap-4 px-4 pb-4">

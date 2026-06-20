@@ -159,9 +159,12 @@ export const ROOMS = {
   },
 }
 
-export const MEDIA_PLAYERS = Object.entries(ROOMS)
-  .filter(([, r]) => r.entities.media)
-  .map(([, r]) => ({ id: r.entities.media, label: r.label, icon: r.icon }))
+export const MEDIA_PLAYERS = [
+  { id: 'media_player.family_room',          label: 'Family Room',          icon: '🛋️' },
+  { id: 'media_player.family_room_shield_2', label: 'Family Room Shield',   icon: '🛋️', remote: 'remote.family_room_shield' },
+  { id: 'media_player.bedroom_tv',           label: 'Master Bedroom TV',    icon: '🛏️' },
+  { id: 'media_player.ami_bedroom_speaker',  label: "Ami's Bedroom Speaker", icon: '🛏️' },
+]
 
 export const FLOOR_ROOMS = Object.entries(ROOMS).reduce((acc, [id, room]) => {
   if (!acc[room.floor]) acc[room.floor] = []
