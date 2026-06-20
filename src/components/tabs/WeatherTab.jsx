@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, Cell, LabelList,
+  ResponsiveContainer, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, LabelList,
 } from 'recharts'
 import { useHA } from '../../hooks/useHA'
 import { useHistory } from '../../hooks/useHistory'
@@ -190,6 +190,28 @@ function ForecastBarCard({ title, children, height = 200 }) {
 
 const AXIS_TICK = { fill: '#6b7280', fontSize: 11, fontFamily: 'system-ui' }
 
+// Two-line tick: "Sat" on top, "6/20" below — used on bar chart X axes
+function DayDateTick({ x, y, payload }) {
+  const [day, date] = (payload.value ?? '').split('|')
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#9ca3af" fontSize={10} fontFamily="system-ui" dy={12}>{day}</text>
+      {date && <text textAnchor="middle" fill="#6b7280" fontSize={9} fontFamily="system-ui" dy={23}>{date}</text>}
+    </g>
+  )
+}
+
+// Two-line tick for SunTimeline Y axis (category axis, horizontal bars)
+function SunYTick({ x, y, payload }) {
+  const [day, date] = (payload.value ?? '').split('|')
+  return (
+    <g>
+      <text x={x - 4} y={y} textAnchor="end" fill="#9ca3af" fontSize={10} fontFamily="system-ui" dy={-3}>{day}</text>
+      {date && <text x={x - 4} y={y} textAnchor="end" fill="#6b7280" fontSize={9} fontFamily="system-ui" dy={8}>{date}</text>}
+    </g>
+  )
+}
+
 // ── Sunrise / sunset chart ────────────────────────────────────────────
 
 function hourToTime(h) {
@@ -200,82 +222,67 @@ function hourToTime(h) {
   return `${disp}:${String(mins).padStart(2, '0')} ${ampm}`
 }
 
-function DaylightYTick({ x, y, payload }) {
-  const h = payload.value
-  const label = h === 0 ? '12 AM' : h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h - 12} PM`
-  return (
-    <text x={x} y={y + 4} textAnchor="end" fill="#6b7280" fontSize={10} fontFamily="system-ui">
-      {label}
-    </text>
-  )
-}
 
-function DaylightTooltip({ active, payload, label }) {
+function SunTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
-  const raw = payload.find(p => p.dataKey === 'daylight')?.payload
-  if (!raw) return null
-  const totalMins = Math.round(raw.daylight * 60)
-  const dh = Math.floor(totalMins / 60)
-  const dm = totalMins % 60
+  const entry = payload[0]?.payload
+  if (!entry?.sunriseRaw) return null
+  const daylight = entry.sunsetRaw - entry.sunriseRaw
+  const [day, date] = (entry.day ?? '').split('|')
+  const label = date ? `${day} ${date}` : day
   return (
     <div className="bg-card border border-border rounded-xl px-3 py-2.5 text-xs shadow-xl">
       <div className="text-muted-foreground mb-1.5 font-medium">{label}</div>
       <div className="flex items-center gap-2 py-0.5">
         <span>🌅</span>
         <span className="text-muted-foreground w-14">Sunrise</span>
-        <span className="font-semibold">{hourToTime(raw.sunriseRaw)}</span>
+        <span className="font-semibold">{hourToTime(entry.sunriseRaw)}</span>
       </div>
       <div className="flex items-center gap-2 py-0.5">
         <span>🌇</span>
         <span className="text-muted-foreground w-14">Sunset</span>
-        <span className="font-semibold">{hourToTime(raw.sunsetRaw)}</span>
+        <span className="font-semibold">{hourToTime(entry.sunsetRaw)}</span>
       </div>
-      <div className="flex items-center gap-2 py-0.5 pt-1.5 mt-1 border-t border-border">
+      <div className="flex items-center gap-2 py-0.5 pt-1.5 mt-1 border-t border-border text-muted-foreground">
         <span>☀️</span>
-        <span className="text-muted-foreground w-14">Daylight</span>
-        <span className="font-semibold">{dh}h {dm > 0 ? `${dm}m` : ''}</span>
+        <span className="w-14">Daylight</span>
+        <span className="font-semibold text-foreground">
+          {Math.floor(daylight)}h {Math.round((daylight % 1) * 60)}m
+        </span>
       </div>
     </div>
   )
 }
 
-function DaylightChart() {
+function SunTimeline() {
   const { states } = useHA()
-  const sunEntity   = states['sun.sun']
-  const { history, loading } = useHistory(['sun.sun'], 192) // 8 days
+  const sunEntity  = states['sun.sun']
+  const { history, loading } = useHistory(['sun.sun'], 192)
 
-  const sunSnapshots = history?.['sun.sun'] ?? []
-
-  // Extract rise/set transitions from recorder history
   const events = []
   let prevState = null
-  for (const snap of sunSnapshots) {
+  for (const snap of history?.['sun.sun'] ?? []) {
     const state = snap.s ?? snap.state
-    const ts    = snap.lu != null
-      ? snap.lu * 1000
-      : new Date(snap.last_changed ?? snap.last_updated).getTime()
+    const ts    = snap.lu != null ? snap.lu * 1000 : new Date(snap.last_changed ?? snap.last_updated).getTime()
     if (prevState === 'below_horizon' && state === 'above_horizon') events.push({ type: 'rise', ts })
     else if (prevState === 'above_horizon' && state === 'below_horizon') events.push({ type: 'set', ts })
     prevState = state
   }
 
-  // Append next rise/set from live state attributes (covers today/tomorrow gaps)
   const nextRising  = sunEntity?.attributes?.next_rising
   const nextSetting = sunEntity?.attributes?.next_setting
   if (nextRising)  events.push({ type: 'rise', ts: new Date(nextRising).getTime() })
   if (nextSetting) events.push({ type: 'set',  ts: new Date(nextSetting).getTime() })
 
-  // Group by calendar day
   const dayMap = new Map()
   for (const ev of events) {
     const d   = new Date(ev.ts)
     const key = `${d.getMonth()}-${d.getDate()}`
-    if (!dayMap.has(key)) {
-      dayMap.set(key, {
-        sortKey: ev.ts,
-        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
-      })
-    }
+    if (!dayMap.has(key)) dayMap.set(key, {
+      sortKey: ev.ts,
+      day:     d.toLocaleDateString('en-US', { weekday: 'short' }),
+      dateStr: d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }),
+    })
     const hour = d.getHours() + d.getMinutes() / 60
     if (ev.type === 'rise') dayMap.get(key).sunrise = hour
     else                    dayMap.get(key).sunset  = hour
@@ -286,39 +293,76 @@ function DaylightChart() {
     .sort((a, b) => a.sortKey - b.sortKey)
     .slice(-7)
     .map(d => ({
-      day:        d.day,
-      dark:       parseFloat(d.sunrise.toFixed(2)),
-      daylight:   parseFloat((d.sunset - d.sunrise).toFixed(2)),
-      sunriseRaw: d.sunrise,
-      sunsetRaw:  d.sunset,
+      day:        `${d.day}|${d.dateStr}`,
+      night:      parseFloat(d.sunrise.toFixed(3)),       // spacer: midnight → sunrise
+      daylight:   parseFloat((d.sunset - d.sunrise).toFixed(3)), // visible: sunrise → sunset
+      sunriseRaw: parseFloat(d.sunrise.toFixed(3)),
+      sunsetRaw:  parseFloat(d.sunset.toFixed(3)),
     }))
 
   if (loading || chartData.length === 0) return null
 
+  const allTimes = chartData.flatMap(d => [d.sunriseRaw, d.sunsetRaw])
+  const xMin     = Math.floor(Math.min(...allTimes)) - 0.5
+  const xMax     = Math.ceil(Math.max(...allTimes))  + 0.5
+
+  const xTicks = []
+  for (let h = Math.ceil(xMin); h <= Math.floor(xMax); h++) {
+    if (h % 3 === 0) xTicks.push(h)
+  }
+
+  const xFmt = h => h === 0 ? '12 AM' : h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h - 12} PM`
+
   return (
-    <ForecastBarCard title="Sunrise & Sunset · Daylight Hours" height={200}>
-      <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
-        <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
-        <YAxis
-          domain={[4, 22]}
-          ticks={[6, 9, 12, 15, 18, 21]}
-          tick={<DaylightYTick />}
+    <ForecastBarCard title="Sunrise & Sunset Timeline" height={chartData.length * 44 + 40}>
+      <BarChart
+        layout="vertical"
+        data={chartData}
+        margin={{ top: 4, right: 16, bottom: 4, left: 4 }}
+        barSize={22}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#282828" horizontal={false} />
+        <XAxis
+          type="number"
+          domain={[xMin, xMax]}
+          ticks={xTicks}
+          tickFormatter={xFmt}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
-          width={42}
         />
-        <Tooltip content={<DaylightTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-        <Bar dataKey="dark"     stackId="sun" fill="transparent" isAnimationActive={false} />
-        <Bar dataKey="daylight" stackId="sun" fill="#fbbf24"     radius={[3, 3, 3, 3]} opacity={0.85} isAnimationActive={false}>
+        <YAxis
+          type="category"
+          dataKey="day"
+          tick={<SunYTick />}
+          tickLine={false}
+          axisLine={false}
+          width={52}
+        />
+        <Tooltip content={<SunTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+        {/* invisible spacer from midnight to sunrise */}
+        <Bar dataKey="night"    stackId="sun" fill="transparent" isAnimationActive={false} />
+        {/* golden daylight bar from sunrise to sunset */}
+        <Bar
+          dataKey="daylight" stackId="sun"
+          fill="#fef9c3" stroke="#fbbf24" strokeWidth={1}
+          radius={20} isAnimationActive={false}
+        >
           <LabelList
-            dataKey="daylight"
-            position="inside"
-            style={{ fill: '#78350f', fontSize: 9, fontFamily: 'system-ui', fontWeight: '600' }}
-            formatter={v => {
-              const h = Math.floor(v)
-              const m = Math.round((v - h) * 60)
-              return `${h}h${m > 0 ? ` ${m}m` : ''}`
+            content={({ x, y, width, height, index }) => {
+              const d = chartData[index]
+              if (!d || width < 80) return null
+              const cy = y + height / 2 + 4
+              return (
+                <g>
+                  <text x={x + 12} y={cy} textAnchor="start" fill="#92400e" fontSize={10} fontFamily="system-ui" fontWeight="600">
+                    {hourToTime(d.sunriseRaw)}
+                  </text>
+                  <text x={x + width - 12} y={cy} textAnchor="end" fill="#92400e" fontSize={10} fontFamily="system-ui" fontWeight="600">
+                    {hourToTime(d.sunsetRaw)}
+                  </text>
+                </g>
+              )
             }}
           />
         </Bar>
@@ -392,18 +436,22 @@ export function WeatherTab() {
   const selectedEntry = forecast[selectedIdx] ?? null
 
   const highLowData = forecast.map((entry, i) => {
-    const d = parseForecastDate(entry.datetime)
+    const d    = parseForecastDate(entry.datetime)
+    const date = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })
+    const wday = d.toLocaleDateString('en-US', { weekday: 'short' })
     return {
-      day:  i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
+      day:  i === 0 ? `Today|${date}` : `${wday}|${date}`,
       high: Math.round(entry.temperature),
       low:  Math.round(entry.templow ?? entry.temperature - 10),
     }
   })
 
   const precipData = forecast.map((entry, i) => {
-    const d = parseForecastDate(entry.datetime)
+    const d    = parseForecastDate(entry.datetime)
+    const date = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })
+    const wday = d.toLocaleDateString('en-US', { weekday: 'short' })
     return {
-      day:    i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
+      day:    i === 0 ? `Today|${date}` : `${wday}|${date}`,
       precip: entry.precipitation_probability ?? 0,
     }
   })
@@ -499,10 +547,10 @@ export function WeatherTab() {
       {/* 7-day forecast bar charts */}
       {forecast.length > 0 && (
         <div className="grid grid-cols-2 gap-4">
-          <ForecastBarCard title="7-Day High / Low  °F" height={180}>
-            <BarChart data={highLowData} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
+          <ForecastBarCard title="7-Day High / Low  °F" height={200}>
+            <BarChart data={highLowData} margin={{ top: 18, right: 4, bottom: 8, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
-              <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+              <XAxis dataKey="day" tick={<DayDateTick />} tickLine={false} axisLine={false} height={42} />
               <YAxis domain={[yMin, yMax]} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={v => `${v}°`} width={36} />
               <Tooltip content={<BarChartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10, color: '#9ca3af' }} iconType="circle" iconSize={8} />
@@ -515,10 +563,10 @@ export function WeatherTab() {
             </BarChart>
           </ForecastBarCard>
 
-          <ForecastBarCard title="7-Day Precipitation Chance" height={180}>
-            <BarChart data={precipData} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
+          <ForecastBarCard title="7-Day Precipitation Chance" height={200}>
+            <BarChart data={precipData} margin={{ top: 18, right: 4, bottom: 8, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
-              <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+              <XAxis dataKey="day" tick={<DayDateTick />} tickLine={false} axisLine={false} height={42} />
               <YAxis domain={[0, 100]} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} width={36} />
               <Tooltip content={<BarChartTooltip />} />
               <Bar dataKey="precip" name="Precip. %" radius={[3, 3, 0, 0]} unit="%">
@@ -535,8 +583,8 @@ export function WeatherTab() {
         </div>
       )}
 
-      {/* Sunrise / sunset daylight chart */}
-      <DaylightChart />
+      {/* Sunrise / sunset timeline */}
+      <SunTimeline />
     </div>
   )
 }
