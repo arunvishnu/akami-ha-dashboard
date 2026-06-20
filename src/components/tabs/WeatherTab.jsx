@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend, Cell,
+} from 'recharts'
 import { useHA } from '../../hooks/useHA'
 import { cn } from '../../lib/utils'
+import { TemperatureChart } from '../TemperatureChart'
 
 // ── Condition helpers ─────────────────────────────────────────────────
 
@@ -137,6 +142,53 @@ function DetailPanel({ entry, sunEntity }) {
   )
 }
 
+// ── 24h chart series ──────────────────────────────────────────────────
+
+const fromState = s => parseFloat(s.state)
+
+const TEMP_SERIES = [
+  { id: 'sensor.openweathermap_temperature', key: 'temp',   label: 'Temperature', color: '#60a5fa', getValue: fromState, area: true },
+  { id: 'sensor.openweathermap_feels_like',  key: 'feels',  label: 'Feels Like',  color: '#fb923c', getValue: fromState },
+]
+
+const HUMIDITY_SERIES = [
+  { id: 'sensor.openweathermap_humidity', key: 'humidity', label: 'Humidity', color: '#38bdf8', getValue: fromState },
+]
+
+
+// ── Bar chart helpers ─────────────────────────────────────────────────
+
+function BarChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-card border border-border rounded-xl px-3 py-2.5 text-xs shadow-xl">
+      <div className="text-muted-foreground mb-1.5 font-medium">{label}</div>
+      {payload.map(p => p.value != null && (
+        <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
+          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: p.fill ?? p.color }} />
+          <span className="text-muted-foreground w-20">{p.name}</span>
+          <span className="font-semibold tabular-nums">{p.value}{p.unit ?? ''}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ForecastBarCard({ title, children, height = 200 }) {
+  return (
+    <div className="bg-card border border-border rounded-xl px-4 pt-4 pb-2">
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+        {title}
+      </div>
+      <ResponsiveContainer width="100%" height={height}>
+        {children}
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+const AXIS_TICK = { fill: '#6b7280', fontSize: 11, fontFamily: 'system-ui' }
+
 // ── Weather tab ───────────────────────────────────────────────────────
 
 export function WeatherTab() {
@@ -200,6 +252,28 @@ export function WeatherTab() {
   }
 
   const selectedEntry = forecast[selectedIdx] ?? null
+
+  const highLowData = forecast.map((entry, i) => {
+    const d = parseForecastDate(entry.datetime)
+    return {
+      day:  i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
+      high: Math.round(entry.temperature),
+      low:  Math.round(entry.templow ?? entry.temperature - 10),
+    }
+  })
+
+  const precipData = forecast.map((entry, i) => {
+    const d = parseForecastDate(entry.datetime)
+    return {
+      day:    i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
+      precip: entry.precipitation_probability ?? 0,
+    }
+  })
+
+  const allLows  = highLowData.map(d => d.low)
+  const allHighs = highLowData.map(d => d.high)
+  const yMin = allLows.length  ? Math.min(...allLows)  - 5 : 40
+  const yMax = allHighs.length ? Math.max(...allHighs) + 5 : 100
 
   return (
     <div className="p-4 flex flex-col gap-4">
@@ -268,6 +342,56 @@ export function WeatherTab() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* 24h history charts */}
+      <div className="grid grid-cols-2 gap-4">
+        <TemperatureChart
+          title="Temperature · Last 24h"
+          series={TEMP_SERIES}
+          height={180}
+          unit="°F"
+        />
+        <TemperatureChart
+          title="Humidity · Last 24h"
+          series={HUMIDITY_SERIES}
+          height={180}
+          unit="%"
+        />
+      </div>
+
+      {/* 7-day forecast bar charts */}
+      {forecast.length > 0 && (
+        <div className="grid grid-cols-2 gap-4">
+          <ForecastBarCard title="7-Day High / Low  °F" height={180}>
+            <BarChart data={highLowData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
+              <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+              <YAxis domain={[yMin, yMax]} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={v => `${v}°`} width={36} />
+              <Tooltip content={<BarChartTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10, color: '#9ca3af' }} iconType="circle" iconSize={8} />
+              <Bar dataKey="high" name="High" fill="#f97316" radius={[3, 3, 0, 0]} unit="°" />
+              <Bar dataKey="low"  name="Low"  fill="#60a5fa" radius={[3, 3, 0, 0]} unit="°" />
+            </BarChart>
+          </ForecastBarCard>
+
+          <ForecastBarCard title="7-Day Precipitation Chance" height={180}>
+            <BarChart data={precipData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
+              <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+              <YAxis domain={[0, 100]} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} width={36} />
+              <Tooltip content={<BarChartTooltip />} />
+              <Bar dataKey="precip" name="Precip. %" radius={[3, 3, 0, 0]} unit="%">
+                {precipData.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={entry.precip >= 70 ? '#3b82f6' : entry.precip >= 40 ? '#60a5fa' : '#93c5fd'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ForecastBarCard>
         </div>
       )}
     </div>

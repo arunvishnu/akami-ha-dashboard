@@ -49,7 +49,7 @@ function buildChartData(history, series) {
 
 // ── Tooltip ────────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload, label, unit = '°F' }) {
   if (!active || !payload?.length) return null
   const d    = new Date(label)
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
@@ -61,7 +61,7 @@ function CustomTooltip({ active, payload, label }) {
         <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
           <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
           <span className="text-muted-foreground w-24">{p.name}</span>
-          <span className="font-semibold tabular-nums">{p.value}°F</span>
+          <span className="font-semibold tabular-nums">{p.value}{unit}</span>
         </div>
       ))}
     </div>
@@ -93,7 +93,8 @@ function Skeleton({ height = 240 }) {
  * Generic temperature line chart.
  * series: Array<{ id, key, label, color, getValue: (snap) => number }>
  */
-export function TemperatureChart({ title, series, hours = 24, height = 240 }) {
+export function TemperatureChart({ title, series, hours = 24, height = 240, unit = '°F' }) {
+  const yUnit = unit.startsWith('°') ? '°' : unit
   const entityIds = series.map(s => s.id)
   const { history, loading, error } = useHistory(entityIds, hours)
 
@@ -136,13 +137,13 @@ export function TemperatureChart({ title, series, hours = 24, height = 240 }) {
           />
           <YAxis
             domain={['auto', 'auto']}
-            tickFormatter={v => `${v}°`}
+            tickFormatter={v => `${v}${yUnit}`}
             tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'system-ui' }}
             tickLine={false}
             axisLine={false}
             width={36}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={(props) => <CustomTooltip {...props} unit={unit} />} />
           <Legend
             wrapperStyle={{ fontSize: 11, paddingTop: 12, color: '#9ca3af' }}
             iconType="circle"
