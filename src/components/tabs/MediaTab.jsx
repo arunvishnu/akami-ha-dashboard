@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { SkipBack, SkipForward, Play, Pause, Volume1, Volume2, Music, Tv, Power } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Volume1, Volume2, Music, Tv, Power, Gamepad2 } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { MEDIA_PLAYERS } from '../../layout'
 import { Card } from '../ui/card'
 import { cn } from '../../lib/utils'
+import { ShieldRemote } from '../ShieldRemote'
 
 const HA_URL = import.meta.env.VITE_HA_URL
 
@@ -76,7 +77,7 @@ function CollapsedPlayer({ player, entity, onExpand }) {
   )
 }
 
-function ExpandedPlayer({ player, entity, onCollapse }) {
+function ExpandedPlayer({ player, entity, onCollapse, onOpenRemote }) {
   const { callService } = useHA()
   const state     = entity?.state ?? 'unavailable'
   const title     = entity?.attributes?.media_title
@@ -105,19 +106,11 @@ function ExpandedPlayer({ player, entity, onCollapse }) {
         </button>
         {player.remote && (
           <button
-            onClick={() => {
-              const isOff = ['off', 'standby', 'unavailable'].includes(state)
-              callService('remote', isOff ? 'turn_on' : 'turn_off', { entity_id: player.remote })
-            }}
-            className={cn(
-              'h-8 w-8 flex items-center justify-center rounded-lg transition-colors shrink-0',
-              ['off', 'standby', 'unavailable'].includes(state)
-                ? 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/70'
-                : 'bg-on/15 text-on hover:bg-on/25'
-            )}
-            title="Power"
+            onClick={onOpenRemote}
+            className="h-8 w-8 flex items-center justify-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors shrink-0"
+            title="Remote"
           >
-            <Power size={14} />
+            <Gamepad2 size={15} />
           </button>
         )}
       </div>
@@ -188,8 +181,8 @@ function ExpandedPlayer({ player, entity, onCollapse }) {
 
 export function MediaTab() {
   const { states } = useHA()
-  // tracks player IDs that have been manually toggled from their default state
   const [manualExpanded, setManualExpanded] = useState(new Set())
+  const [remotePlayer,   setRemotePlayer]   = useState(null) // player with remote open
 
   const toggle = (id) =>
     setManualExpanded(prev => {
@@ -199,35 +192,44 @@ export function MediaTab() {
     })
 
   return (
-    <div className="p-4 flex flex-col gap-3">
-      {MEDIA_PLAYERS.map((player) => {
-        const entity   = states[player.id]
-        const state    = entity?.state ?? 'unavailable'
-        const isActive = ['playing', 'paused', 'buffering'].includes(state)
-        // active → expanded by default; inactive → collapsed by default
-        // manual toggle flips either direction
-        const expanded = manualExpanded.has(player.id) ? !isActive : isActive
+    <>
+      <div className="p-4 flex flex-col gap-3">
+        {MEDIA_PLAYERS.map((player) => {
+          const entity   = states[player.id]
+          const state    = entity?.state ?? 'unavailable'
+          const isActive = ['playing', 'paused', 'buffering'].includes(state)
+          const expanded = manualExpanded.has(player.id) ? !isActive : isActive
 
-        if (expanded) {
+          if (expanded) {
+            return (
+              <ExpandedPlayer
+                key={player.id}
+                player={player}
+                entity={entity}
+                onCollapse={() => toggle(player.id)}
+                onOpenRemote={player.remote ? () => setRemotePlayer(player) : undefined}
+              />
+            )
+          }
+
           return (
-            <ExpandedPlayer
+            <CollapsedPlayer
               key={player.id}
               player={player}
               entity={entity}
-              onCollapse={() => toggle(player.id)}
+              onExpand={() => toggle(player.id)}
             />
           )
-        }
+        })}
+      </div>
 
-        return (
-          <CollapsedPlayer
-            key={player.id}
-            player={player}
-            entity={entity}
-            onExpand={() => toggle(player.id)}
-          />
-        )
-      })}
-    </div>
+      {remotePlayer && (
+        <ShieldRemote
+          mediaEntityId={remotePlayer.id}
+          remoteEntityId={remotePlayer.remote}
+          onClose={() => setRemotePlayer(null)}
+        />
+      )}
+    </>
   )
 }
