@@ -4,6 +4,7 @@ import {
   CartesianGrid, Tooltip, Legend, Cell, LabelList,
 } from 'recharts'
 import { useHA } from '../../hooks/useHA'
+import { useHistory } from '../../hooks/useHistory'
 import { cn } from '../../lib/utils'
 import { TemperatureChart } from '../TemperatureChart'
 
@@ -189,6 +190,143 @@ function ForecastBarCard({ title, children, height = 200 }) {
 
 const AXIS_TICK = { fill: '#6b7280', fontSize: 11, fontFamily: 'system-ui' }
 
+// ── Sunrise / sunset chart ────────────────────────────────────────────
+
+function hourToTime(h) {
+  const hrs  = Math.floor(h)
+  const mins = Math.round((h - hrs) * 60)
+  const ampm = hrs >= 12 ? 'PM' : 'AM'
+  const disp = hrs === 0 ? 12 : hrs > 12 ? hrs - 12 : hrs
+  return `${disp}:${String(mins).padStart(2, '0')} ${ampm}`
+}
+
+function DaylightYTick({ x, y, payload }) {
+  const h = payload.value
+  const label = h === 0 ? '12 AM' : h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h - 12} PM`
+  return (
+    <text x={x} y={y + 4} textAnchor="end" fill="#6b7280" fontSize={10} fontFamily="system-ui">
+      {label}
+    </text>
+  )
+}
+
+function DaylightTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const raw = payload.find(p => p.dataKey === 'daylight')?.payload
+  if (!raw) return null
+  const totalMins = Math.round(raw.daylight * 60)
+  const dh = Math.floor(totalMins / 60)
+  const dm = totalMins % 60
+  return (
+    <div className="bg-card border border-border rounded-xl px-3 py-2.5 text-xs shadow-xl">
+      <div className="text-muted-foreground mb-1.5 font-medium">{label}</div>
+      <div className="flex items-center gap-2 py-0.5">
+        <span>🌅</span>
+        <span className="text-muted-foreground w-14">Sunrise</span>
+        <span className="font-semibold">{hourToTime(raw.sunriseRaw)}</span>
+      </div>
+      <div className="flex items-center gap-2 py-0.5">
+        <span>🌇</span>
+        <span className="text-muted-foreground w-14">Sunset</span>
+        <span className="font-semibold">{hourToTime(raw.sunsetRaw)}</span>
+      </div>
+      <div className="flex items-center gap-2 py-0.5 pt-1.5 mt-1 border-t border-border">
+        <span>☀️</span>
+        <span className="text-muted-foreground w-14">Daylight</span>
+        <span className="font-semibold">{dh}h {dm > 0 ? `${dm}m` : ''}</span>
+      </div>
+    </div>
+  )
+}
+
+function DaylightChart() {
+  const { states } = useHA()
+  const sunEntity   = states['sun.sun']
+  const { history, loading } = useHistory(['sun.sun'], 192) // 8 days
+
+  const sunSnapshots = history?.['sun.sun'] ?? []
+
+  // Extract rise/set transitions from recorder history
+  const events = []
+  let prevState = null
+  for (const snap of sunSnapshots) {
+    const state = snap.s ?? snap.state
+    const ts    = snap.lu != null
+      ? snap.lu * 1000
+      : new Date(snap.last_changed ?? snap.last_updated).getTime()
+    if (prevState === 'below_horizon' && state === 'above_horizon') events.push({ type: 'rise', ts })
+    else if (prevState === 'above_horizon' && state === 'below_horizon') events.push({ type: 'set', ts })
+    prevState = state
+  }
+
+  // Append next rise/set from live state attributes (covers today/tomorrow gaps)
+  const nextRising  = sunEntity?.attributes?.next_rising
+  const nextSetting = sunEntity?.attributes?.next_setting
+  if (nextRising)  events.push({ type: 'rise', ts: new Date(nextRising).getTime() })
+  if (nextSetting) events.push({ type: 'set',  ts: new Date(nextSetting).getTime() })
+
+  // Group by calendar day
+  const dayMap = new Map()
+  for (const ev of events) {
+    const d   = new Date(ev.ts)
+    const key = `${d.getMonth()}-${d.getDate()}`
+    if (!dayMap.has(key)) {
+      dayMap.set(key, {
+        sortKey: ev.ts,
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      })
+    }
+    const hour = d.getHours() + d.getMinutes() / 60
+    if (ev.type === 'rise') dayMap.get(key).sunrise = hour
+    else                    dayMap.get(key).sunset  = hour
+  }
+
+  const chartData = Array.from(dayMap.values())
+    .filter(d => d.sunrise != null && d.sunset != null)
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .slice(-7)
+    .map(d => ({
+      day:        d.day,
+      dark:       parseFloat(d.sunrise.toFixed(2)),
+      daylight:   parseFloat((d.sunset - d.sunrise).toFixed(2)),
+      sunriseRaw: d.sunrise,
+      sunsetRaw:  d.sunset,
+    }))
+
+  if (loading || chartData.length === 0) return null
+
+  return (
+    <ForecastBarCard title="Sunrise & Sunset · Daylight Hours" height={200}>
+      <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
+        <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+        <YAxis
+          domain={[4, 22]}
+          ticks={[6, 9, 12, 15, 18, 21]}
+          tick={<DaylightYTick />}
+          tickLine={false}
+          axisLine={false}
+          width={42}
+        />
+        <Tooltip content={<DaylightTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+        <Bar dataKey="dark"     stackId="sun" fill="transparent" isAnimationActive={false} />
+        <Bar dataKey="daylight" stackId="sun" fill="#fbbf24"     radius={[3, 3, 3, 3]} opacity={0.85} isAnimationActive={false}>
+          <LabelList
+            dataKey="daylight"
+            position="inside"
+            style={{ fill: '#78350f', fontSize: 9, fontFamily: 'system-ui', fontWeight: '600' }}
+            formatter={v => {
+              const h = Math.floor(v)
+              const m = Math.round((v - h) * 60)
+              return `${h}h${m > 0 ? ` ${m}m` : ''}`
+            }}
+          />
+        </Bar>
+      </BarChart>
+    </ForecastBarCard>
+  )
+}
+
 // ── Weather tab ───────────────────────────────────────────────────────
 
 export function WeatherTab() {
@@ -313,37 +451,34 @@ export function WeatherTab() {
         <DetailPanel entry={selectedEntry} sunEntity={sunEntity} />
       </div>
 
-      {/* Extended info from current sensors */}
-      {weatherEntity && (
-        <div className="bg-card border border-border rounded-xl p-4">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Current Conditions
+      {/* Compact current conditions strip */}
+      {weatherEntity && (() => {
+        const feelsLike = weatherEntity.attributes?.apparent_temperature != null
+          ? Math.round(weatherEntity.attributes.apparent_temperature)
+          : states['sensor.openweathermap_feels_like']?.state
+            ? roundSensor(states['sensor.openweathermap_feels_like'].state)
+            : null
+        const visibility = weatherEntity.attributes?.visibility != null
+          ? `${round(weatherEntity.attributes.visibility)} ${weatherEntity.attributes?.visibility_unit || 'mi'}`
+          : states['sensor.openweathermap_visibility']?.state
+            ? `${states['sensor.openweathermap_visibility'].state} ${states['sensor.openweathermap_visibility'].attributes?.unit_of_measurement}`
+            : null
+        return (
+          <div className="bg-card border border-border rounded-xl px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
+            <span className="font-semibold text-foreground">
+              {conditionIcon(weatherEntity.state)} {conditionLabel(weatherEntity.state)}
+            </span>
+            {currentTemp && (
+              <span className="text-muted-foreground">
+                {roundSensor(currentTemp.state)}°F{feelsLike != null ? ` · feels ${feelsLike}°` : ''}
+              </span>
+            )}
+            {currentHum && <span className="text-muted-foreground">💧 {roundSensor(currentHum.state)}%</span>}
+            {windSpeed && <span className="text-muted-foreground">💨 {roundSensor(windSpeed.state)} {windSpeed.attributes?.unit_of_measurement}</span>}
+            {visibility && <span className="text-muted-foreground">👁 {visibility}</span>}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Condition',    value: conditionLabel(weatherEntity.state) },
-              { label: 'Temperature',  value: currentTemp ? `${roundSensor(currentTemp.state)}${currentTemp.attributes?.unit_of_measurement}` : '—' },
-              { label: 'Humidity',     value: currentHum  ? `${roundSensor(currentHum.state)}%`  : '—' },
-              { label: 'Wind Speed',   value: windSpeed   ? `${roundSensor(windSpeed.state)} ${windSpeed.attributes?.unit_of_measurement}` : '—' },
-              { label: 'Feels Like',   value: weatherEntity.attributes?.apparent_temperature != null
-                  ? `${round(weatherEntity.attributes.apparent_temperature)}°`
-                  : states['sensor.openweathermap_feels_like']?.state
-                    ? `${roundSensor(states['sensor.openweathermap_feels_like'].state)}${states['sensor.openweathermap_feels_like'].attributes?.unit_of_measurement}`
-                    : '—' },
-              { label: 'Visibility',   value: weatherEntity.attributes?.visibility != null
-                  ? `${round(weatherEntity.attributes.visibility)} ${weatherEntity.attributes?.visibility_unit || 'mi'}`
-                  : states['sensor.openweathermap_visibility']?.state
-                    ? `${states['sensor.openweathermap_visibility'].state} ${states['sensor.openweathermap_visibility'].attributes?.unit_of_measurement}`
-                    : '—' },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-secondary/50 rounded-lg px-3 py-2">
-                <div className="text-xs text-muted-foreground">{label}</div>
-                <div className="text-sm font-medium mt-0.5">{value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* 24h history charts */}
       <div className="grid grid-cols-2 gap-4">
@@ -399,6 +534,9 @@ export function WeatherTab() {
           </ForecastBarCard>
         </div>
       )}
+
+      {/* Sunrise / sunset daylight chart */}
+      <DaylightChart />
     </div>
   )
 }
