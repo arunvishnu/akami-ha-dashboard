@@ -305,6 +305,29 @@ function ClimateCard({ entityId }) {
   )
 }
 
+// ── Chart series definitions ───────────────────────────────────────────
+
+const fromState = s => parseFloat(s.state)
+const fromAttr  = s => s.attributes?.current_temperature
+
+const OVERVIEW_SERIES = [
+  { id: 'sensor.openweathermap_temperature', key: 'outdoor', label: 'Outdoor',   color: '#60a5fa', getValue: fromState, area: true },
+  { id: 'climate.first_floor',               key: 'floor1',  label: '1st Floor', color: '#f97316', getValue: fromAttr  },
+  { id: 'climate.second_floor',              key: 'floor2',  label: '2nd Floor', color: '#a855f7', getValue: fromAttr  },
+]
+
+const FLOOR1_SERIES = [
+  { id: 'climate.first_floor',            key: 'thermo',      label: 'Thermostat',  color: '#f97316', getValue: fromAttr,  area: true },
+  { id: 'sensor.family_room_temperature', key: 'family_room', label: 'Family Room', color: '#34d399', getValue: fromState },
+]
+
+const FLOOR2_SERIES = [
+  { id: 'climate.second_floor',              key: 'thermo', label: 'Thermostat',       color: '#a855f7', getValue: fromAttr,  area: true },
+  { id: 'sensor.akshit_bedroom_temperature', key: 'akshit', label: "Akshit's Bedroom", color: '#60a5fa', getValue: fromState },
+  { id: 'sensor.ami_bedroom_temperature',    key: 'ami',    label: "Ami's Bedroom",    color: '#f472b6', getValue: fromState },
+  { id: 'sensor.arun_office_temperature',    key: 'office', label: 'Office',           color: '#facc15', getValue: fromState },
+]
+
 // ── Climate tab ────────────────────────────────────────────────────────
 
 export function ClimateTab() {
@@ -314,7 +337,25 @@ export function ClimateTab() {
         <ClimateCard entityId="climate.first_floor" />
         <ClimateCard entityId="climate.second_floor" />
       </div>
-      <TemperatureChart />
+
+      <TemperatureChart
+        title="Temperature · Last 24 Hours"
+        series={OVERVIEW_SERIES}
+        height={220}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <TemperatureChart
+          title="1st Floor · Rooms vs Thermostat"
+          series={FLOOR1_SERIES}
+          height={200}
+        />
+        <TemperatureChart
+          title="2nd Floor · Rooms vs Thermostat"
+          series={FLOOR2_SERIES}
+          height={200}
+        />
+      </div>
     </div>
   )
 }
