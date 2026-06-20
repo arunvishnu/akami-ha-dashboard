@@ -77,7 +77,7 @@ function Weather() {
 
 // ── Climate strip ──────────────────────────────────────────────────────
 
-function ClimateStrip() {
+function ClimateStrip({ onNavigate }) {
   const { states } = useHA()
   const LABELS = { first_floor: '1st Floor', second_floor: '2nd Floor' }
   return (
@@ -90,11 +90,15 @@ function ClimateStrip() {
         const tgt  = e.attributes?.temperature
         const unit = e.attributes?.temperature_unit || '°'
         return (
-          <div key={id} className="bg-secondary rounded-lg px-3 py-2 min-w-0">
+          <button
+            key={id}
+            onClick={() => onNavigate?.('climate')}
+            className="bg-secondary rounded-lg px-3 py-2 min-w-0 text-left hover:bg-secondary/70 transition-colors"
+          >
             <div className="text-xs text-muted-foreground">{LABELS[key] || key}</div>
             <div className="text-base font-semibold tabular-nums">{cur}{unit}</div>
             {tgt && <div className="text-xs text-muted-foreground">→ {tgt}{unit}</div>}
-          </div>
+          </button>
         )
       })}
     </div>
@@ -258,14 +262,14 @@ function SceneStrip() {
 
 // ── Home tab ───────────────────────────────────────────────────────────
 
-export function HomeTab() {
+export function HomeTab({ onNavigate }) {
   return (
     <div className="flex flex-col h-full">
       {/* Status bar */}
       <div className="flex items-start gap-6 px-4 py-4 border-b border-border flex-wrap">
         <Clock />
         <Weather />
-        <ClimateStrip />
+        <ClimateStrip onNavigate={onNavigate} />
       </div>
 
       {/* Main content */}

@@ -47,7 +47,7 @@ export function Dashboard({ onReset }) {
       <TabBar active={activeTab} onChange={setActiveTab} />
 
       <main className="flex-1 overflow-y-auto min-h-0">
-        {activeTab === 'home'    && <HomeTab />}
+        {activeTab === 'home'    && <HomeTab onNavigate={setActiveTab} />}
         {activeTab === 'weather' && <WeatherTab />}
         {activeTab === 'climate' && <ClimateTab />}
         {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && <FloorTab floorId={activeTab} />}
