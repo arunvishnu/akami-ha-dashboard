@@ -38,6 +38,19 @@ export function HAProvider({ children }) {
     })
   }, [send])
 
+  // Generic message sender — resolves with msg.result on success
+  const sendMessage = useCallback((msg) => {
+    const id = msgIdRef.current++
+    return new Promise((resolve, reject) => {
+      pendingRef.current[id] = { resolve, reject }
+      const sent = send({ ...msg, id })
+      if (!sent) {
+        delete pendingRef.current[id]
+        reject(new Error('WebSocket not connected'))
+      }
+    })
+  }, [send])
+
   useEffect(() => {
     const { url, token } = getCredentials()
     if (!token) { setConnectionStatus('error'); return }
@@ -116,7 +129,7 @@ export function HAProvider({ children }) {
   }, [])
 
   return (
-    <HAContext.Provider value={{ states, connectionStatus, callService }}>
+    <HAContext.Provider value={{ states, connectionStatus, callService, sendMessage }}>
       {children}
     </HAContext.Provider>
   )

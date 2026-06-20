@@ -1,5 +1,6 @@
 import { useHA } from '../../hooks/useHA'
 import { cn } from '../../lib/utils'
+import { TemperatureChart } from '../TemperatureChart'
 
 // ── Ring geometry ──────────────────────────────────────────────────────
 
@@ -308,9 +309,12 @@ function ClimateCard({ entityId }) {
 
 export function ClimateTab() {
   return (
-    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <ClimateCard entityId="climate.first_floor" />
-      <ClimateCard entityId="climate.second_floor" />
+    <div className="p-4 flex flex-col gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <ClimateCard entityId="climate.first_floor" />
+        <ClimateCard entityId="climate.second_floor" />
+      </div>
+      <TemperatureChart />
     </div>
   )
 }
