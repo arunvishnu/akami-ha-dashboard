@@ -172,11 +172,69 @@ export const HOME_ENTITIES = {
   occupancy: Object.entries(ROOMS)
     .filter(([, r]) => r.entities.occupancy)
     .map(([id, r]) => ({ roomId: id, label: r.label, entity: r.entities.occupancy })),
-  quickLights: [
-    { label: 'Family Room', entityId: 'light.family_room',  icon: '🛋️', domain: 'light' },
-    { label: 'Kitchen',     entityId: 'light.kitchen',      icon: '🍳', domain: 'light' },
-    { label: 'Outdoor',     entityId: 'light.outdoor',      icon: '🌿', domain: 'light' },
-    { label: 'Office',      entityId: 'light.office',       icon: '💼', domain: 'light' },
+  quickControls: [
+    {
+      label: 'Family Room',
+      icon: 'Sofa',
+      entities: [{ id: 'light.family_room', domain: 'light' }],
+    },
+    {
+      label: 'Kitchen',
+      icon: 'ChefHat',
+      entities: [{ id: 'light.kitchen', domain: 'light' }],
+    },
+    {
+      label: 'Other 1st Floor',
+      icon: 'Layers',
+      entities: [
+        { id: 'light.foyer',     domain: 'light' },
+        { id: 'light.library',   domain: 'light' },
+        { id: 'light.sun_room',  domain: 'light' },
+        { id: 'light.office',    domain: 'light' },
+        { id: 'switch.foyer_chandelier_switch',           domain: 'switch' },
+        { id: 'switch.foyer_holiday_lights',              domain: 'switch' },
+        { id: 'switch.laundry_room_light_switch',         domain: 'switch' },
+        { id: 'switch.sunroom_led_light',                 domain: 'switch' },
+        { id: 'switch.family_room_hallway_lights_switch', domain: 'switch' },
+      ],
+    },
+    {
+      label: 'Master Bedroom',
+      icon: 'BedDouble',
+      entities: [{ id: 'light.master_bedroom', domain: 'light' }],
+    },
+    {
+      label: "Ami's LED",
+      icon: 'Sparkles',
+      entities: [{ id: 'light.ami_bedroom_led', domain: 'light' }],
+    },
+    {
+      label: 'Office Front',
+      icon: 'Lamp',
+      entities: [{ id: 'light.office_front', domain: 'light' }],
+    },
+    {
+      label: 'Garden Lights',
+      icon: 'Leaf',
+      entities: [
+        { id: 'switch.front_yard_smart_plug_left',  domain: 'switch' },
+        { id: 'switch.front_yard_smart_plug_right', domain: 'switch' },
+      ],
+    },
+    {
+      label: 'Other Outdoor',
+      icon: 'Sun',
+      entities: [
+        { id: 'light.front_porche',     domain: 'light' },
+        { id: 'light.driveway',          domain: 'light' },
+        { id: 'light.garage_1',          domain: 'light' },
+        { id: 'light.garage_2',          domain: 'light' },
+        { id: 'light.garage_out',        domain: 'light' },
+        { id: 'light.lamp_post',         domain: 'light' },
+        { id: 'switch.deck_smart_plug',     domain: 'switch' },
+        { id: 'switch.driveway_smart_plug', domain: 'switch' },
+      ],
+    },
   ],
   homeScenes: [
     'scene.family_room_bright',

@@ -1,23 +1,15 @@
 import { useState, useEffect } from 'react'
+import {
+  Sofa, ChefHat, Layers, BedDouble, Sparkles, Lamp, Leaf, Sun,
+  Moon,
+} from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { HOME_ENTITIES } from '../../layout'
 import { cn } from '../../lib/utils'
+import { Card } from '../ui/card'
+import { Switch } from '../ui/switch'
 
-// ── Toggle ─────────────────────────────────────────────────────────────
-
-function Toggle({ isOn }) {
-  return (
-    <div className={cn(
-      'relative h-5 w-9 rounded-full transition-colors duration-200 shrink-0',
-      isOn ? 'bg-on' : 'bg-secondary'
-    )}>
-      <span className={cn(
-        'absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200',
-        isOn && 'translate-x-4'
-      )} />
-    </div>
-  )
-}
+const CONTROL_ICONS = { Sofa, ChefHat, Layers, BedDouble, Sparkles, Lamp, Leaf, Sun }
 
 // ── Clock ──────────────────────────────────────────────────────────────
 
@@ -173,10 +165,11 @@ function Occupancy() {
   )
 }
 
-// ── Quick lights ───────────────────────────────────────────────────────
+// ── Quick controls ─────────────────────────────────────────────────────
 
-function QuickLights() {
+function QuickControls() {
   const { states, callService } = useHA()
+
   const allOff = () => {
     HOME_ENTITIES.allLights.forEach(id => callService('light', 'turn_off', { entity_id: id }))
     HOME_ENTITIES.allSwitches.forEach(id => callService('switch', 'turn_off', { entity_id: id }))
@@ -184,33 +177,49 @@ function QuickLights() {
 
   return (
     <section>
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Lights</h2>
-      <div className="flex flex-col gap-2">
-        {HOME_ENTITIES.quickLights.map(({ label, entityId, icon, domain }) => {
-          const isOn = states[entityId]?.state === 'on'
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Controls</h2>
+      <div className="grid grid-cols-2 gap-2">
+        {HOME_ENTITIES.quickControls.map((control) => {
+          const Icon = CONTROL_ICONS[control.icon]
+          const isOn = control.entities.some(e => states[e.id]?.state === 'on')
+          const toggle = () => {
+            const action = isOn ? 'turn_off' : 'turn_on'
+            control.entities.forEach(({ id, domain }) =>
+              callService(domain, action, { entity_id: id })
+            )
+          }
           return (
-            <button
-              key={entityId}
-              onClick={() => callService(domain, 'toggle', { entity_id: entityId })}
+            <Card
+              key={control.label}
+              onClick={toggle}
               className={cn(
-                'flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors',
-                'bg-card border',
-                isOn ? 'border-on/30' : 'border-border'
+                'flex items-center gap-3 px-3 py-3 cursor-pointer select-none transition-colors',
+                'hover:bg-secondary/60 active:scale-[0.98]',
+                isOn ? 'border-on/40 bg-on/5' : 'border-border'
               )}
             >
-              <span className="text-lg leading-none">{icon}</span>
-              <span className="flex-1 text-sm font-medium">{label}</span>
-              <Toggle isOn={isOn} />
-            </button>
+              <div className={cn(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                isOn ? 'bg-on/15 text-on' : 'bg-secondary text-muted-foreground'
+              )}>
+                {Icon && <Icon size={16} />}
+              </div>
+              <span className="flex-1 text-sm font-medium leading-tight">{control.label}</span>
+              <Switch checked={isOn} onCheckedChange={toggle} />
+            </Card>
           )
         })}
-        <button
+
+        {/* All Off */}
+        <Card
           onClick={allOff}
-          className="flex items-center gap-3 rounded-xl px-4 py-3 bg-secondary hover:bg-secondary/80 transition-colors"
+          className="col-span-2 flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-secondary/60 transition-colors active:scale-[0.99]"
         >
-          <span className="text-lg leading-none">🌙</span>
-          <span className="flex-1 text-sm font-medium text-muted-foreground">All Off</span>
-        </button>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
+            <Moon size={16} />
+          </div>
+          <span className="flex-1 text-sm font-medium text-muted-foreground">All Lights Off</span>
+        </Card>
       </div>
     </section>
   )
@@ -266,7 +275,7 @@ export function HomeTab() {
           <Occupancy />
         </div>
         <div>
-          <QuickLights />
+          <QuickControls />
         </div>
       </div>
 
