@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, Cell,
+  CartesianGrid, Tooltip, Legend, Cell, LabelList,
 } from 'recharts'
 import { useHA } from '../../hooks/useHA'
 import { cn } from '../../lib/utils'
@@ -365,19 +365,23 @@ export function WeatherTab() {
       {forecast.length > 0 && (
         <div className="grid grid-cols-2 gap-4">
           <ForecastBarCard title="7-Day High / Low  °F" height={180}>
-            <BarChart data={highLowData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+            <BarChart data={highLowData} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
               <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
               <YAxis domain={[yMin, yMax]} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={v => `${v}°`} width={36} />
               <Tooltip content={<BarChartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10, color: '#9ca3af' }} iconType="circle" iconSize={8} />
-              <Bar dataKey="high" name="High" fill="#f97316" radius={[3, 3, 0, 0]} unit="°" />
-              <Bar dataKey="low"  name="Low"  fill="#60a5fa" radius={[3, 3, 0, 0]} unit="°" />
+              <Bar dataKey="high" name="High" fill="#f97316" radius={[3, 3, 0, 0]} unit="°">
+                <LabelList dataKey="high" position="top" style={{ fill: '#f97316', fontSize: 10, fontFamily: 'system-ui' }} formatter={v => `${v}°`} />
+              </Bar>
+              <Bar dataKey="low" name="Low" fill="#60a5fa" radius={[3, 3, 0, 0]} unit="°">
+                <LabelList dataKey="low" position="top" style={{ fill: '#60a5fa', fontSize: 10, fontFamily: 'system-ui' }} formatter={v => `${v}°`} />
+              </Bar>
             </BarChart>
           </ForecastBarCard>
 
           <ForecastBarCard title="7-Day Precipitation Chance" height={180}>
-            <BarChart data={precipData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+            <BarChart data={precipData} margin={{ top: 18, right: 4, bottom: 0, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#282828" vertical={false} />
               <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={false} />
               <YAxis domain={[0, 100]} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} width={36} />
@@ -389,6 +393,7 @@ export function WeatherTab() {
                     fill={entry.precip >= 70 ? '#3b82f6' : entry.precip >= 40 ? '#60a5fa' : '#93c5fd'}
                   />
                 ))}
+                <LabelList dataKey="precip" position="top" style={{ fill: '#9ca3af', fontSize: 10, fontFamily: 'system-ui' }} formatter={v => v > 0 ? `${v}%` : ''} />
               </Bar>
             </BarChart>
           </ForecastBarCard>
