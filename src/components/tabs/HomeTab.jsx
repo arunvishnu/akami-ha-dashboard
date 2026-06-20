@@ -46,7 +46,7 @@ const CONDITION_ICONS = {
   'lightning-rainy': '⛈️', 'fog': '🌫️', 'windy': '💨', 'hail': '🌨️',
 }
 
-function Weather() {
+function Weather({ onNavigate }) {
   const { states } = useHA()
   const w    = states[HOME_ENTITIES.weather]
   const temp = states['sensor.openweathermap_temperature']
@@ -61,7 +61,10 @@ function Weather() {
   const r = (v) => v != null ? Math.round(parseFloat(v)) : null
 
   return (
-    <div className="flex items-center gap-3 min-w-0">
+    <button
+      onClick={() => onNavigate?.('weather')}
+      className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity"
+    >
       <span className="text-3xl leading-none">{icon}</span>
       <div className="min-w-0">
         <div className="text-xl font-bold tabular-nums">{r(temp?.state)}{unit}</div>
@@ -71,7 +74,7 @@ function Weather() {
           {wind && <span>💨 {r(wind.state)} {wind.attributes?.unit_of_measurement}</span>}
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -268,7 +271,7 @@ export function HomeTab({ onNavigate }) {
       {/* Status bar */}
       <div className="flex items-start gap-6 px-4 py-4 border-b border-border flex-wrap">
         <Clock />
-        <Weather />
+        <Weather onNavigate={onNavigate} />
         <ClimateStrip onNavigate={onNavigate} />
       </div>
 
