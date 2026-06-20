@@ -2,6 +2,7 @@ export const FLOORS = [
   { id: 'home',         label: 'Home',      icon: '🏠' },
   { id: 'weather',      label: 'Weather',   icon: '🌤️' },
   { id: 'climate',      label: 'Climate',   icon: '🌡️' },
+  { id: 'media',        label: 'Media',     icon: '🎵' },
   { id: 'first_floor',  label: '1st Floor', icon: '🪜' },
   { id: 'second_floor', label: '2nd Floor', icon: '🛏️' },
   { id: 'outdoor',      label: 'Outdoor',   icon: '🌿' },
@@ -157,6 +158,10 @@ export const ROOMS = {
     },
   },
 }
+
+export const MEDIA_PLAYERS = Object.entries(ROOMS)
+  .filter(([, r]) => r.entities.media)
+  .map(([, r]) => ({ id: r.entities.media, label: r.label, icon: r.icon }))
 
 export const FLOOR_ROOMS = Object.entries(ROOMS).reduce((acc, [id, room]) => {
   if (!acc[room.floor]) acc[room.floor] = []

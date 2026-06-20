@@ -5,6 +5,7 @@ import { HomeTab } from './tabs/HomeTab'
 import { FloorTab } from './tabs/FloorTab'
 import { WeatherTab } from './tabs/WeatherTab'
 import { ClimateTab } from './tabs/ClimateTab'
+import { MediaTab } from './tabs/MediaTab'
 import { cn } from '../lib/utils'
 
 const RAW_BUILD_TIME = import.meta.env.VITE_BUILD_TIME
@@ -50,7 +51,8 @@ export function Dashboard({ onReset }) {
         {activeTab === 'home'    && <HomeTab onNavigate={setActiveTab} />}
         {activeTab === 'weather' && <WeatherTab />}
         {activeTab === 'climate' && <ClimateTab />}
-        {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && <FloorTab floorId={activeTab} />}
+        {activeTab === 'media'   && <MediaTab />}
+        {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && activeTab !== 'media' && <FloorTab floorId={activeTab} />}
       </main>
     </div>
   )
