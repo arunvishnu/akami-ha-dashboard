@@ -11,7 +11,7 @@ export function TabBar({ active, onChange }) {
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-sm whitespace-nowrap rounded-md transition-all duration-150 outline-none',
             active === floor.id
-              ? 'bg-background text-foreground font-semibold shadow-sm'
+              ? 'bg-background text-foreground font-semibold shadow-sm border border-on/40'
               : 'font-medium text-muted-foreground hover:text-foreground hover:bg-background/60'
           )}
         >
