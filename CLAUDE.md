@@ -60,3 +60,13 @@ Single CSS file at `src/styles/index.css`. Dark theme with CSS variables in `:ro
 - URL: `https://home.arunvishnu.com`
 - Served via NGINX Proxy Manager (WebSocket support enabled)
 - HA Yellow, HA OS 17.3, HA 2026.6.3
+
+## HA MCP server
+An MCP server for the HA instance is available. Use it (via `mcp__home-assistant__*` tools) when you need to:
+- Look up current entity states, attributes, or history
+- Discover entity IDs, device names, areas, or floors
+- Call HA services (toggle lights, adjust climate, run scripts, etc.)
+- Create or edit automations, helpers, scenes, or dashboards
+- Verify that a code change reflects the real HA state
+
+MCP tools are deferred — load schemas with `ToolSearch` before calling them. Load only the tools you need, not all at once. Before performing any HA config actions (automations, helpers, dashboards), read the `skill://home-assistant-best-practices/SKILL.md` resource first.
