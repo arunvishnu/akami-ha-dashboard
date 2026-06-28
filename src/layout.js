@@ -1,5 +1,6 @@
 export const FLOORS = [
   { id: 'home',         label: 'Home',      icon: '🏠' },
+  { id: 'rooms',        label: 'Rooms',     icon: '🛋️' },
   { id: 'weather',      label: 'Weather',   icon: '🌤️' },
   { id: 'climate',      label: 'Climate',   icon: '🌡️' },
   { id: 'media',        label: 'Media',     icon: '🎵' },
@@ -21,6 +22,7 @@ export const ROOMS = {
       media:       'media_player.family_room',
       switches:    ['switch.family_room_hallway_lights_switch'],
       scenes:      ['scene.family_room_bright','scene.family_room_concentrate','scene.family_room_relax','scene.family_room_dimmed','scene.family_room_nightlight','scene.family_room_energize'],
+      covers:      ['cover.family_room_family_room_2_story_windows_top_left','cover.family_room_family_room_2_story_windows_top_right','cover.family_room_family_room_2_story_windows_bottom_left','cover.family_room_family_room_2_story_windows_bottom_right'],
     },
   },
   kitchen: {

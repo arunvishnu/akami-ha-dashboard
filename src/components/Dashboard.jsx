@@ -5,6 +5,7 @@ import { HomeTab } from './tabs/HomeTab'
 import { FloorTab } from './tabs/FloorTab'
 import { FirstFloorTab } from './tabs/FirstFloorTab'
 import { SecondFloorTab } from './tabs/SecondFloorTab'
+import { RoomsTab } from './tabs/RoomsTab'
 import { WeatherTab } from './tabs/WeatherTab'
 import { ClimateTab } from './tabs/ClimateTab'
 import { MediaTab } from './tabs/MediaTab'
@@ -49,14 +50,15 @@ export function Dashboard({ onReset }) {
 
       <TabBar active={activeTab} onChange={setActiveTab} />
 
-      <main className="flex-1 overflow-y-auto min-h-0">
-        {activeTab === 'home'    && <HomeTab onNavigate={setActiveTab} />}
-        {activeTab === 'weather' && <WeatherTab />}
-        {activeTab === 'climate' && <ClimateTab />}
-        {activeTab === 'media'   && <MediaTab />}
+      <main className={cn('flex-1 min-h-0', activeTab === 'rooms' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto')}>
+        {activeTab === 'home'         && <HomeTab onNavigate={setActiveTab} />}
+        {activeTab === 'rooms'        && <RoomsTab />}
+        {activeTab === 'weather'      && <WeatherTab />}
+        {activeTab === 'climate'      && <ClimateTab />}
+        {activeTab === 'media'        && <MediaTab />}
         {activeTab === 'first_floor'  && <FirstFloorTab />}
         {activeTab === 'second_floor' && <SecondFloorTab />}
-        {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && activeTab !== 'media' && activeTab !== 'first_floor' && activeTab !== 'second_floor' && <FloorTab floorId={activeTab} />}
+        {!['home','rooms','weather','climate','media','first_floor','second_floor'].includes(activeTab) && <FloorTab floorId={activeTab} />}
       </main>
     </div>
   )
