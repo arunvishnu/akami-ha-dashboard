@@ -4,26 +4,26 @@ import { ROOMS } from '../../layout'
 import { RoomDetail } from '../RoomDetail'
 
 // SVG viewBox 0 0 540 330
-// Top (y 0-150):   Master Bedroom (wide) | Office | Bathroom (decor)
-// Bottom (y 153-330): Akshit's Bedroom | Hallway/Landing (decor, stairs) | Ami's Bedroom | Guest Bedroom
+// Top (y 0-150):   Office | Master Bedroom (wide) | Bathroom (decor)
+// Bottom (y 153-330): Ami's Bedroom | Hallway/Landing (decor, stairs) | Guest Bedroom | Akshit's Bedroom
 
 const GAP = 3
 
 const HA_ROOMS = [
-  { id: 'master_bedroom', label: 'Master Bedroom',   x: 0,   y: 0,   w: 220, h: 150 },
-  { id: 'office',         label: 'Office',           x: 223, y: 0,   w: 170, h: 150 },
-  { id: 'akshit_bedroom', label: "Akshit's Bedroom", x: 0,   y: 153, w: 170, h: 177 },
-  { id: 'ami_bedroom',    label: "Ami's Bedroom",    x: 276, y: 153, w: 165, h: 177 },
-  { id: 'guest_bedroom',  label: 'Guest Bedroom',    x: 444, y: 153, w: 93,  h: 177 },
+  { id: 'office',         label: 'Office',           x: 0,   y: 0,   w: 170, h: 150 },
+  { id: 'master_bedroom', label: 'Master Bedroom',   x: 173, y: 0,   w: 220, h: 150 },
+  { id: 'ami_bedroom',    label: "Ami's Bedroom",    x: 0,   y: 153, w: 165, h: 177 },
+  { id: 'guest_bedroom',  label: 'Guest Bedroom',    x: 271, y: 153, w: 93,  h: 177 },
+  { id: 'akshit_bedroom', label: "Akshit's Bedroom", x: 367, y: 153, w: 170, h: 177 },
 ]
 
 const DECOR_ROOMS = [
   { label: 'Bathroom', x: 396, y: 0,   w: 141, h: 150 },
-  { label: 'Hallway',  x: 173, y: 153, w: 100, h: 177 },
+  { label: 'Hallway',  x: 168, y: 153, w: 100, h: 177 },
 ]
 
 const STAIR_STEPS = 7
-const STAIR_X = 185
+const STAIR_X = 180
 const STAIR_Y = 180
 const STAIR_W = 52
 const STAIR_H = 80
