@@ -3,6 +3,7 @@ import { useHA } from '../hooks/useHA'
 import { TabBar } from './TabBar'
 import { HomeTab } from './tabs/HomeTab'
 import { FloorTab } from './tabs/FloorTab'
+import { FirstFloorTab } from './tabs/FirstFloorTab'
 import { WeatherTab } from './tabs/WeatherTab'
 import { ClimateTab } from './tabs/ClimateTab'
 import { MediaTab } from './tabs/MediaTab'
@@ -52,7 +53,8 @@ export function Dashboard({ onReset }) {
         {activeTab === 'weather' && <WeatherTab />}
         {activeTab === 'climate' && <ClimateTab />}
         {activeTab === 'media'   && <MediaTab />}
-        {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && activeTab !== 'media' && <FloorTab floorId={activeTab} />}
+        {activeTab === 'first_floor' && <FirstFloorTab />}
+        {activeTab !== 'home' && activeTab !== 'weather' && activeTab !== 'climate' && activeTab !== 'media' && activeTab !== 'first_floor' && <FloorTab floorId={activeTab} />}
       </main>
     </div>
   )

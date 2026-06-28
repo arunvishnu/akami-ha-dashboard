@@ -46,13 +46,13 @@ export const ROOMS = {
       scenes:  ['scene.library_bright','scene.library_dimmed','scene.library_energize','scene.library_nightlight'],
     },
   },
-  office: {
-    label: 'Office', icon: '💼', floor: 'first_floor',
+  living_room: {
+    label: 'Living Room', icon: '🛋️', floor: 'first_floor',
     entities: {
-      lights:      ['light.office','light.office_front'],
-      temperature: 'sensor.arun_office_temperature',
-      occupancy:   'binary_sensor.arun_office_occupancy',
-      scenes:      ['scene.office_bright','scene.office_concentrate','scene.office_relax','scene.office_dimmed','scene.office_nightlight'],
+      lights:      ['light.dimmer'],
+      switches:    ['switch.power_switch'],
+      occupancy:   'binary_sensor.living_room_occupancy',
+      temperature: 'sensor.living_room_temperature',
     },
   },
   sun_room: {
@@ -72,6 +72,15 @@ export const ROOMS = {
   },
 
   // ── Second Floor ─────────────────────────────────────
+  office: {
+    label: 'Office', icon: '💼', floor: 'second_floor',
+    entities: {
+      lights:      ['light.office','light.office_front'],
+      temperature: 'sensor.arun_office_temperature',
+      occupancy:   'binary_sensor.arun_office_occupancy',
+      scenes:      ['scene.office_bright','scene.office_concentrate','scene.office_relax','scene.office_dimmed','scene.office_nightlight'],
+    },
+  },
   master_bedroom: {
     label: 'Master Bedroom', icon: '🛏️', floor: 'second_floor',
     entities: {
@@ -198,7 +207,6 @@ export const HOME_ENTITIES = {
         { id: 'light.foyer',     domain: 'light' },
         { id: 'light.library',   domain: 'light' },
         { id: 'light.sun_room',  domain: 'light' },
-        { id: 'light.office',    domain: 'light' },
         { id: 'switch.foyer_chandelier_switch',           domain: 'switch' },
         { id: 'switch.foyer_holiday_lights',              domain: 'switch' },
         { id: 'switch.laundry_room_light_switch',         domain: 'switch' },
