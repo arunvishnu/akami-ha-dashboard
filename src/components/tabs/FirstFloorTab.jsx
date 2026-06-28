@@ -34,15 +34,27 @@ const STAIR_H = 80
 
 function getRoomStatus(roomId, states) {
   const room = ROOMS[roomId]
-  if (!room) return { isLit: false, isOccupied: null, tempVal: null }
-  const { lights = [], switches = [], occupancy, temperature } = room.entities
-  const all = [...lights, ...switches]
-  const lightsOn = all.filter(id => states[id]?.state === 'on').length
-  const isLit = lightsOn > 0
+  if (!room) return { isLit: false, isOccupied: null, tempVal: null, statusText: null, isActive: false }
+  const { lights = [], switches = [], fan, occupancy, temperature } = room.entities
+
+  const lightsOn = lights.filter(id => states[id]?.state === 'on').length
+  const switchesOn = switches.filter(id => states[id]?.state === 'on').length
+  const fanOn = fan ? states[fan]?.state === 'on' : false
+  const isLit = lightsOn > 0 || switchesOn > 0
+  const isActive = isLit || fanOn
+
   const isOccupied = occupancy ? states[occupancy]?.state === 'on' : null
   const tempState = temperature ? states[temperature] : null
   const tempVal = tempState ? `${Math.round(parseFloat(tempState.state))}°` : null
-  return { isLit, isOccupied, tempVal }
+
+  const parts = []
+  if (lightsOn > 0) parts.push(lights.length === 1 ? 'light' : `${lightsOn}/${lights.length} lights`)
+  if (switchesOn > 0) parts.push(switchesOn === 1 && switches.length === 1 ? 'switch' : `${switchesOn} sw`)
+  if (fanOn) parts.push('fan')
+  const hasControllable = lights.length > 0 || switches.length > 0 || fan
+  const statusText = parts.length > 0 ? parts.join(' · ') : (hasControllable ? 'off' : null)
+
+  return { isLit, isOccupied, tempVal, statusText, isActive }
 }
 
 function StairCase() {
@@ -85,7 +97,7 @@ function StairCase() {
 }
 
 function RoomCell({ room, isSelected, onClick, states }) {
-  const { isLit, isOccupied, tempVal } = getRoomStatus(room.id, states)
+  const { isLit, isOccupied, tempVal, statusText, isActive } = getRoomStatus(room.id, states)
   const { x, y, w, h, label } = room
   const cx = x + w / 2
   const cy = y + h / 2
@@ -141,6 +153,21 @@ function RoomCell({ room, isSelected, onClick, states }) {
           fontFamily="system-ui"
         >
           {tempVal}
+        </text>
+      )}
+
+      {statusText && (
+        <text
+          x={cx}
+          y={y + h - GAP - 9}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={isActive ? 'rgba(251,191,36,0.65)' : 'rgba(255,255,255,0.2)'}
+          fontSize={6.5}
+          fontFamily="system-ui"
+          style={{ userSelect: 'none' }}
+        >
+          {statusText}
         </text>
       )}
 
