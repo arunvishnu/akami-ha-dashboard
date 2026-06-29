@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useHA } from '../../hooks/useHA'
 import { ROOMS } from '../../layout'
 import { FamilyRoomView } from '../rooms/FamilyRoomView'
+import { OfficeView } from '../rooms/OfficeView'
+import { MasterBedroomView } from '../rooms/MasterBedroomView'
 import { RoomDetail } from '../RoomDetail'
 import { cn } from '../../lib/utils'
 
@@ -48,7 +50,9 @@ function RoomSidebarItem({ roomId, room, isSelected, onClick, states }) {
 
 // Rooms with custom views — others fall back to embedded RoomDetail
 const CUSTOM_VIEWS = {
-  family_room: FamilyRoomView,
+  family_room:    FamilyRoomView,
+  office:         OfficeView,
+  master_bedroom: MasterBedroomView,
 }
 
 export function RoomsTab() {
