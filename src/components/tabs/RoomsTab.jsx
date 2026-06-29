@@ -4,6 +4,7 @@ import { ROOMS } from '../../layout'
 import { FamilyRoomView } from '../rooms/FamilyRoomView'
 import { OfficeView } from '../rooms/OfficeView'
 import { MasterBedroomView } from '../rooms/MasterBedroomView'
+import { GenericRoomView } from '../rooms/GenericRoomView'
 import { RoomDetail } from '../RoomDetail'
 import { cn } from '../../lib/utils'
 
@@ -49,10 +50,17 @@ function RoomSidebarItem({ roomId, room, isSelected, onClick, states }) {
 }
 
 // Rooms with custom views — others fall back to embedded RoomDetail
+const GENERIC_ROOMS = [
+  'kitchen', 'foyer', 'library', 'living_room', 'sun_room', 'laundry',
+  'akshit_bedroom', 'ami_bedroom', 'guest_bedroom', 'basement_main',
+  'front_porch', 'driveway', 'garage', 'deck', 'front_yard',
+]
+
 const CUSTOM_VIEWS = {
   family_room:    FamilyRoomView,
   office:         OfficeView,
   master_bedroom: MasterBedroomView,
+  ...Object.fromEntries(GENERIC_ROOMS.map(id => [id, () => <GenericRoomView roomId={id} />])),
 }
 
 export function RoomsTab() {
