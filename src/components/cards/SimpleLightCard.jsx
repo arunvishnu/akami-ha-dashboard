@@ -1,6 +1,7 @@
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
+import { CardDeviceIcon } from './CardDeviceIcon'
 import { cn } from '../../lib/utils'
 
 const ACCENT = '#fbbf24'
@@ -21,19 +22,14 @@ export function SimpleLightCard({ entityId, label }) {
         ? 'bg-amber-950/30 border-amber-500/20'
         : 'bg-zinc-900/80 border-white/8'
     )}>
-      {/* Icon + name */}
-      <div className="flex items-center gap-3">
-        <div className={cn(
-          'h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300',
-          isOn ? 'bg-amber-500/20' : 'bg-white/5'
-        )}>
-          <Lightbulb className={cn('h-5 w-5 transition-all duration-300', isOn ? 'text-amber-300' : 'text-white/20')} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold truncate">{name}</div>
-          <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
-            {isOn ? 'On' : 'Off'}
-          </div>
+      {/* Icon */}
+      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={ACCENT} />
+
+      {/* Name + status */}
+      <div className="text-center">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
+          {isOn ? 'On' : 'Off'}
         </div>
       </div>
 

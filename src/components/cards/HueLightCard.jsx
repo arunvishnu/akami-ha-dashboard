@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
+import { CardDeviceIcon } from './CardDeviceIcon'
 import { cn } from '../../lib/utils'
 
 const ACCENT = '#fbbf24'
@@ -45,28 +46,15 @@ export function HueLightCard({ entityId, label }) {
         ? 'bg-amber-950/40 border-amber-500/25 shadow-[0_0_28px_rgba(251,191,36,0.08)]'
         : 'bg-zinc-900/80 border-white/8'
     )}>
-      {/* Header */}
-      <div className="flex items-start gap-2">
-        <div className={cn(
-          'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300',
-          isOn ? 'bg-amber-500/20' : 'bg-white/5'
-        )}>
-          <Lightbulb className={cn('h-4 w-4 transition-all duration-300', isOn ? 'text-amber-300' : 'text-white/20')} />
-        </div>
-        <div>
-          <div className="text-sm font-semibold">{name}</div>
-          <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
-            {isOn ? `${activePreset?.label ?? ''} · ${localBright}%` : 'Light is off'}
-          </div>
-        </div>
-      </div>
+      {/* Icon */}
+      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={ACCENT} />
 
-      {/* Big brightness number */}
-      <div className={cn('text-center py-1 transition-opacity', !isOn && 'opacity-20')}>
-        <div className={cn('text-5xl font-bold tabular-nums leading-none', isOn ? 'text-amber-300' : 'text-white/40')}>
-          {isOn ? localBright : '—'}
+      {/* Name + status */}
+      <div className="text-center">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
+          {isOn ? `${activePreset?.label ?? ''} · ${localBright}%` : 'Light is off'}
         </div>
-        <div className="text-[10px] text-muted-foreground/40 mt-2 uppercase tracking-widest">Brightness %</div>
       </div>
 
       {/* Slider */}

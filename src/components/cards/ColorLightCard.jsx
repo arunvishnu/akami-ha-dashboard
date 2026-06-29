@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
+import { CardDeviceIcon } from './CardDeviceIcon'
 import { cn } from '../../lib/utils'
 
 const CT_PRESETS = [
@@ -16,8 +17,7 @@ export function ColorLightCard({ entityId, label }) {
   const name      = label || entity?.attributes?.friendly_name || entityId
   const isOn      = entity?.state === 'on'
   const rawBright = entity?.attributes?.brightness != null
-    ? Math.round((entity.attributes.brightness / 255) * 100)
-    : 0
+    ? Math.round((entity.attributes.brightness / 255) * 100) : 0
   const ctKelvin   = entity?.attributes?.color_temp_kelvin
   const rgb        = entity?.attributes?.rgb_color
   const currentFx  = entity?.attributes?.effect
@@ -30,9 +30,7 @@ export function ColorLightCard({ entityId, label }) {
   const [localBright, setLocalBright] = useState(rawBright)
   const [dragging, setDragging]       = useState(false)
 
-  useEffect(() => {
-    if (!dragging) setLocalBright(rawBright)
-  }, [rawBright, dragging])
+  useEffect(() => { if (!dragging) setLocalBright(rawBright) }, [rawBright, dragging])
 
   const toggle       = () => callService('light', 'toggle', { entity_id: entityId })
   const commitBright = (v) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: v })
@@ -45,7 +43,7 @@ export function ColorLightCard({ entityId, label }) {
         Math.abs(p.kelvin - ctKelvin) < Math.abs(best.kelvin - ctKelvin) ? p : best, availableCT[0])
     : null
 
-  const dotColor  = rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : '#fff'
+  const dotColor  = rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : '#fbbf24'
   const accent    = isOn && rgb ? dotColor : '#fbbf24'
   const glowStyle = isOn && rgb ? { boxShadow: `0 0 28px rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.12)` } : {}
 
@@ -57,25 +55,16 @@ export function ColorLightCard({ entityId, label }) {
       )}
       style={glowStyle}
     >
-      {/* Header */}
-      <div className="flex items-start gap-2">
-        <div className={cn(
-          'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300',
-          isOn ? 'bg-white/10' : 'bg-white/5'
-        )}
-          style={isOn && rgb ? { backgroundColor: `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.15)` } : {}}
-        >
-          <Lightbulb className="h-4 w-4 transition-all duration-300"
-            style={{ color: isOn && rgb ? dotColor : 'rgba(255,255,255,0.2)' }}
-          />
-        </div>
-        <div>
-          <div className="text-sm font-semibold">{name}</div>
-          <div className={cn('text-xs mt-0.5', isOn ? 'text-white/60' : 'text-muted-foreground/50')}>
-            {isOn
-              ? [activePreset?.label, currentFx && currentFx !== 'none' ? currentFx : null].filter(Boolean).join(' · ') || `${localBright}%`
-              : 'Light is off'}
-          </div>
+      {/* Icon */}
+      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={accent} />
+
+      {/* Name + status */}
+      <div className="text-center">
+        <div className="text-sm font-semibold">{name}</div>
+        <div className={cn('text-xs mt-0.5', isOn ? 'text-white/60' : 'text-muted-foreground/50')}>
+          {isOn
+            ? [activePreset?.label, currentFx && currentFx !== 'none' ? currentFx : null].filter(Boolean).join(' · ') || `${localBright}%`
+            : 'Light is off'}
         </div>
       </div>
 
@@ -83,28 +72,21 @@ export function ColorLightCard({ entityId, label }) {
       <div className={cn('flex items-center gap-2 transition-opacity', !isOn && 'opacity-20')}>
         <span className="text-base shrink-0">🔅</span>
         <input
-          type="range"
-          min={1}
-          max={100}
-          value={localBright || 1}
+          type="range" min={1} max={100} value={localBright || 1}
           onChange={(e) => { setDragging(true); setLocalBright(Number(e.target.value)) }}
           onMouseUp={(e)  => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
           onTouchEnd={(e) => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
           className="flex-1 cursor-pointer"
           style={{ height: '6px', accentColor: isOn ? dotColor : '#fff' }}
         />
-        <span className="text-[10px] text-muted-foreground/50 w-7 text-right tabular-nums">
-          {localBright}%
-        </span>
+        <span className="text-[10px] text-muted-foreground/50 w-7 text-right tabular-nums">{localBright}%</span>
       </div>
 
       {/* Color temp presets */}
       {hasColorTemp && availableCT.length > 0 && (
         <div className={cn('flex gap-1.5 transition-opacity', !isOn && 'opacity-20')}>
           {availableCT.map(preset => (
-            <button
-              key={preset.label}
-              onClick={() => setColorTemp(preset.kelvin)}
+            <button key={preset.label} onClick={() => setColorTemp(preset.kelvin)}
               className={cn(
                 'flex-1 rounded-xl py-2.5 flex flex-col items-center gap-1 text-[10px] font-medium transition-all',
                 isOn && activePreset?.label === preset.label
@@ -122,14 +104,10 @@ export function ColorLightCard({ entityId, label }) {
       {/* Effects */}
       {effectList.length > 0 && (
         <div className={cn('transition-opacity', !isOn && 'opacity-20')}>
-          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-1.5">
-            Effects
-          </div>
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-1.5">Effects</div>
           <div className="flex gap-1.5 overflow-x-auto pb-1">
             {effectList.map(fx => (
-              <button
-                key={fx}
-                onClick={() => setEffect(fx)}
+              <button key={fx} onClick={() => setEffect(fx)}
                 className={cn(
                   'rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-all shrink-0 whitespace-nowrap',
                   isOn && currentFx === fx
