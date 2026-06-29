@@ -1,11 +1,12 @@
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Fan } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { cn } from '../../lib/utils'
 
-const ACCENT = '#10b981'
+const ACCENT      = '#10b981'
 const START_ANGLE = 225
-const SWEEP = 270
-const STEP = 25
+const SWEEP       = 270
+const STEP        = 25   // 4 discrete speeds
 
 function polarToXY(cx, cy, r, angleClock) {
   const rad = (angleClock - 90) * (Math.PI / 180)
@@ -20,51 +21,96 @@ function arcPath(cx, cy, r, startAngle, sweepAngle) {
   return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${r} ${r} 0 ${capped > 180 ? 1 : 0} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`
 }
 
-function SpeedDial({ percentage, isOn, onToggle }) {
-  const cx = 100, cy = 100, r = 72
-  const activeSweep = SWEEP * Math.max(0, percentage) / 100
-  const dotAngle = START_ANGLE + activeSweep
-  const dot = polarToXY(cx, cy, r, dotAngle)
-  const speed = percentage > 0 ? Math.ceil(percentage / STEP) : 0
-  const maxSpeed = Math.ceil(100 / STEP)
+function pointerToPercent(e, svgEl) {
+  const rect = svgEl.getBoundingClientRect()
+  const dx = e.clientX - (rect.left + rect.width  / 2)
+  const dy = e.clientY - (rect.top  + rect.height / 2)
+  const angleClock = ((Math.atan2(dy, dx) * 180 / Math.PI) + 90 + 360) % 360
+  let rel = ((angleClock - START_ANGLE) + 360) % 360
+  if (rel > SWEEP) rel = rel < SWEEP + (360 - SWEEP) / 2 ? SWEEP : 0
+  const raw = (rel / SWEEP) * 100
+  // Snap to nearest discrete step
+  return Math.round(raw / STEP) * STEP
+}
+
+function SpeedDial({ percentage, isOn, onToggle, onCommit }) {
+  const svgRef = useRef(null)
+  const [local, setLocal]       = useState(percentage)
+  const [dragging, setDragging] = useState(false)
+
+  useEffect(() => { if (!dragging) setLocal(percentage) }, [percentage, dragging])
+
+  const handlePointerDown = useCallback((e) => {
+    if (!isOn) return
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setDragging(true)
+    setLocal(pointerToPercent(e, svgRef.current))
+  }, [isOn])
+
+  const handlePointerMove = useCallback((e) => {
+    if (!dragging) return
+    setLocal(pointerToPercent(e, svgRef.current))
+  }, [dragging])
+
+  const handlePointerUp = useCallback((e) => {
+    if (!dragging) return
+    setDragging(false)
+    const pct = pointerToPercent(e, svgRef.current)
+    setLocal(pct)
+    onCommit(pct)
+  }, [dragging, onCommit])
+
+  const display      = dragging ? local : percentage
+  const activeSweep  = SWEEP * Math.max(0, display) / 100
+  const dot          = polarToXY(100, 100, 72, START_ANGLE + activeSweep)
+  const speed        = display > 0 ? Math.round(display / STEP) : 0
+  const maxSpeed     = Math.ceil(100 / STEP)
   const spinDuration = isOn && percentage > 0 ? `${1.5 - (percentage / 100)}s` : '1.5s'
 
   return (
     <div className="relative w-52 h-52 shrink-0">
-      <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full">
+      <svg
+        ref={svgRef}
+        viewBox="0 0 200 200"
+        className={cn('absolute inset-0 w-full h-full', isOn ? 'cursor-pointer' : 'cursor-default')}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
         {isOn && (
-          <circle cx={cx} cy={cy} r={r + 4} fill="none"
+          <circle cx={100} cy={100} r={76} fill="none"
             stroke={ACCENT} strokeWidth={1} strokeOpacity={0.08} />
         )}
+        {/* Background track — wider for easier hit */}
         <path
-          d={arcPath(cx, cy, r, START_ANGLE, SWEEP)}
+          d={arcPath(100, 100, 72, START_ANGLE, SWEEP)}
           fill="none" stroke="rgba(255,255,255,0.07)"
-          strokeWidth={10} strokeLinecap="round"
+          strokeWidth={14} strokeLinecap="round"
         />
         {isOn && activeSweep > 0 && (
           <path
-            d={arcPath(cx, cy, r, START_ANGLE, activeSweep)}
+            d={arcPath(100, 100, 72, START_ANGLE, activeSweep)}
             fill="none" stroke={ACCENT}
             strokeWidth={10} strokeLinecap="round"
             style={{ filter: `drop-shadow(0 0 5px ${ACCENT}90)` }}
           />
         )}
-        {isOn && percentage > 0 && (
-          <circle cx={dot.x} cy={dot.y} r={7} fill={ACCENT}
+        {isOn && display > 0 && (
+          <circle cx={dot.x} cy={dot.y} r={dragging ? 9 : 7} fill={ACCENT}
             style={{ filter: `drop-shadow(0 0 6px ${ACCENT})` }} />
         )}
-        {/* Speed label below center */}
-        <text x={cx} y={cy + 42} textAnchor="middle" dominantBaseline="middle"
+        <text x={100} y={142} textAnchor="middle" dominantBaseline="middle"
           fill="rgba(255,255,255,0.3)" fontSize={11} fontFamily="system-ui">
           {isOn && speed > 0 ? `Speed ${speed} of ${maxSpeed}` : ''}
         </text>
       </svg>
 
-      {/* Fan icon — tap to toggle */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      {/* Fan icon — tap to toggle, pointer-events-none wrapper so SVG drag isn't blocked */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <button
           onClick={onToggle}
-          className="h-28 w-28 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+          className="h-28 w-28 rounded-full border-2 flex items-center justify-center transition-all duration-300 pointer-events-auto"
           style={{
             borderColor: isOn ? ACCENT : 'rgba(255,255,255,0.12)',
             boxShadow:   isOn ? `0 0 28px ${ACCENT}55` : 'none',
@@ -93,12 +139,14 @@ export function FanCard({ entityId, label }) {
   const maxSpeed   = Math.ceil(100 / STEP)
 
   const toggle = () => callService('fan', 'toggle', { entity_id: entityId })
-  const setSpeed = (newSpeed) => {
-    if (newSpeed <= 0) callService('fan', 'turn_off', { entity_id: entityId })
-    else callService('fan', 'turn_on', { entity_id: entityId, percentage: Math.min(newSpeed * STEP, 100) })
+
+  const commit = (pct) => {
+    if (pct <= 0) callService('fan', 'turn_off', { entity_id: entityId })
+    else callService('fan', 'turn_on', { entity_id: entityId, percentage: Math.min(pct, 100) })
   }
-  const decrease = () => setSpeed(speed - 1)
-  const increase = () => { if (!isOn) setSpeed(1); else setSpeed(Math.min(speed + 1, maxSpeed)) }
+
+  const decrease = () => commit(speed <= 1 ? 0 : (speed - 1) * STEP)
+  const increase = () => { if (!isOn) commit(STEP); else commit(Math.min((speed + 1) * STEP, 100)) }
 
   return (
     <div className={cn(
@@ -107,7 +155,6 @@ export function FanCard({ entityId, label }) {
         ? 'bg-emerald-950/30 border-emerald-500/20 shadow-[0_0_28px_rgba(16,185,129,0.07)]'
         : 'bg-zinc-900/80 border-white/8'
     )}>
-      {/* Name + status */}
       <div className="text-center">
         <div className="text-sm font-semibold">{name}</div>
         <div className={cn('text-xs mt-0.5', isOn ? 'text-emerald-400/70' : 'text-muted-foreground/40')}>
@@ -115,7 +162,6 @@ export function FanCard({ entityId, label }) {
         </div>
       </div>
 
-      {/* Speed dial with embedded fan icon */}
       <div className="flex items-center justify-between gap-2 px-2">
         <button
           onClick={decrease} disabled={!isOn}
@@ -126,7 +172,12 @@ export function FanCard({ entityId, label }) {
           )}
         >−</button>
 
-        <SpeedDial percentage={isOn ? percentage : 0} isOn={isOn} onToggle={toggle} />
+        <SpeedDial
+          percentage={isOn ? percentage : 0}
+          isOn={isOn}
+          onToggle={toggle}
+          onCommit={commit}
+        />
 
         <button
           onClick={increase} disabled={isOn && speed >= maxSpeed}
