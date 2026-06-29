@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
-
-import { CardDeviceIcon } from './CardDeviceIcon'
+import { BrightnessDial } from './BrightnessDial'
 import { cn } from '../../lib/utils'
 
 const ACCENT = '#fbbf24'
@@ -12,16 +10,11 @@ export function DimmableLightCard({ entityId, label }) {
   const entity    = states[entityId]
   const name      = label || entity?.attributes?.friendly_name || entityId
   const isOn      = entity?.state === 'on'
-  const rawBright = entity?.attributes?.brightness != null
+  const brightness = entity?.attributes?.brightness != null
     ? Math.round((entity.attributes.brightness / 255) * 100) : 0
 
-  const [localBright, setLocalBright] = useState(rawBright)
-  const [dragging, setDragging]       = useState(false)
-
-  useEffect(() => { if (!dragging) setLocalBright(rawBright) }, [rawBright, dragging])
-
-  const toggle       = () => callService('light', 'toggle', { entity_id: entityId })
-  const commitBright = (v) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: v })
+  const toggle = () => callService('light', 'toggle', { entity_id: entityId })
+  const commit = (pct) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: Math.max(1, Math.min(100, pct)) })
 
   return (
     <div className={cn(
@@ -30,31 +23,22 @@ export function DimmableLightCard({ entityId, label }) {
         ? 'bg-amber-950/30 border-amber-500/20'
         : 'bg-zinc-900/80 border-white/8'
     )}>
-      {/* Icon */}
-      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={ACCENT} onClick={toggle} />
+      <BrightnessDial
+        brightness={brightness}
+        isOn={isOn}
+        color={ACCENT}
+        icon={Lightbulb}
+        step={10}
+        onToggle={toggle}
+        onCommit={commit}
+      />
 
-      {/* Name + status */}
       <div className="text-center">
         <div className="text-sm font-semibold">{name}</div>
         <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/50')}>
-          {isOn ? `${localBright}% brightness` : 'Light is off'}
+          {isOn ? `${brightness}%` : 'Light is off'}
         </div>
       </div>
-
-      {/* Brightness slider */}
-      <div className={cn('flex items-center gap-2 transition-opacity', !isOn && 'opacity-25')}>
-        <span className="text-base shrink-0">🔅</span>
-        <input
-          type="range" min={1} max={100} value={localBright || 1}
-          onChange={(e) => { setDragging(true); setLocalBright(Number(e.target.value)) }}
-          onMouseUp={(e)  => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
-          onTouchEnd={(e) => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
-          className="flex-1 accent-amber-400 cursor-pointer"
-          style={{ height: '6px' }}
-        />
-        <span className="text-[10px] text-muted-foreground/50 w-7 text-right tabular-nums">{localBright}%</span>
-      </div>
-
     </div>
   )
 }
