@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
-
-import { CardDeviceIcon } from './CardDeviceIcon'
+import { BrightnessDial } from './BrightnessDial'
 import { cn } from '../../lib/utils'
 
 const CT_PRESETS = [
-  { label: 'Warm',    kelvin: 2700, icon: '🔆' },
-  { label: 'Natural', kelvin: 4000, icon: '☀️' },
-  { label: 'Cool',    kelvin: 6000, icon: '❄️' },
+  { label: 'Warm',    kelvin: 2700 },
+  { label: 'Natural', kelvin: 4000 },
+  { label: 'Cool',    kelvin: 6000 },
 ]
 
 export function ColorLightCard({ entityId, label }) {
@@ -16,7 +14,7 @@ export function ColorLightCard({ entityId, label }) {
   const entity    = states[entityId]
   const name      = label || entity?.attributes?.friendly_name || entityId
   const isOn      = entity?.state === 'on'
-  const rawBright = entity?.attributes?.brightness != null
+  const brightness = entity?.attributes?.brightness != null
     ? Math.round((entity.attributes.brightness / 255) * 100) : 0
   const ctKelvin   = entity?.attributes?.color_temp_kelvin
   const rgb        = entity?.attributes?.rgb_color
@@ -27,13 +25,8 @@ export function ColorLightCard({ entityId, label }) {
   const minK       = entity?.attributes?.min_color_temp_kelvin ?? 2700
   const maxK       = entity?.attributes?.max_color_temp_kelvin ?? 6500
 
-  const [localBright, setLocalBright] = useState(rawBright)
-  const [dragging, setDragging]       = useState(false)
-
-  useEffect(() => { if (!dragging) setLocalBright(rawBright) }, [rawBright, dragging])
-
   const toggle       = () => callService('light', 'toggle', { entity_id: entityId })
-  const commitBright = (v) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: v })
+  const commit       = (v) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: Math.max(1, Math.min(100, v)) })
   const setColorTemp = (k) => callService('light', 'turn_on', { entity_id: entityId, color_temp_kelvin: k })
   const setEffect    = (fx) => callService('light', 'turn_on', { entity_id: entityId, effect: fx })
 
@@ -47,6 +40,10 @@ export function ColorLightCard({ entityId, label }) {
   const accent    = isOn && rgb ? dotColor : '#fbbf24'
   const glowStyle = isOn && rgb ? { boxShadow: `0 0 28px rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.12)` } : {}
 
+  const statusText = isOn
+    ? [activePreset?.label, currentFx && currentFx !== 'none' ? currentFx : null].filter(Boolean).join(' · ') || `${brightness}%`
+    : 'Light is off'
+
   return (
     <div
       className={cn(
@@ -55,49 +52,47 @@ export function ColorLightCard({ entityId, label }) {
       )}
       style={glowStyle}
     >
-      {/* Icon */}
-      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={accent} onClick={toggle} />
+      <BrightnessDial
+        brightness={brightness}
+        isOn={isOn}
+        color={accent}
+        icon={Lightbulb}
+        step={10}
+        onToggle={toggle}
+        onCommit={commit}
+      />
 
-      {/* Name + status */}
       <div className="text-center">
         <div className="text-sm font-semibold">{name}</div>
         <div className={cn('text-xs mt-0.5', isOn ? 'text-white/60' : 'text-muted-foreground/50')}>
-          {isOn
-            ? [activePreset?.label, currentFx && currentFx !== 'none' ? currentFx : null].filter(Boolean).join(' · ') || `${localBright}%`
-            : 'Light is off'}
+          {statusText}
         </div>
       </div>
 
-      {/* Brightness slider */}
-      <div className={cn('flex items-center gap-2 transition-opacity', !isOn && 'opacity-20')}>
-        <span className="text-base shrink-0">🔅</span>
-        <input
-          type="range" min={1} max={100} value={localBright || 1}
-          onChange={(e) => { setDragging(true); setLocalBright(Number(e.target.value)) }}
-          onMouseUp={(e)  => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
-          onTouchEnd={(e) => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
-          className="flex-1 cursor-pointer"
-          style={{ height: '6px', accentColor: isOn ? dotColor : '#fff' }}
-        />
-        <span className="text-[10px] text-muted-foreground/50 w-7 text-right tabular-nums">{localBright}%</span>
-      </div>
-
-      {/* Color temp presets */}
+      {/* Color temp segmented strip */}
       {hasColorTemp && availableCT.length > 0 && (
-        <div className={cn('flex gap-1.5 transition-opacity', !isOn && 'opacity-20')}>
-          {availableCT.map(preset => (
-            <button key={preset.label} onClick={() => setColorTemp(preset.kelvin)}
-              className={cn(
-                'flex-1 rounded-xl py-2.5 flex flex-col items-center gap-1 text-[10px] font-medium transition-all',
-                isOn && activePreset?.label === preset.label
-                  ? 'bg-white/15 text-white ring-1 ring-white/25'
-                  : 'bg-white/5 text-muted-foreground hover:bg-white/10'
-              )}
-            >
-              <span className="text-sm leading-none">{preset.icon}</span>
-              <span>{preset.label}</span>
-            </button>
-          ))}
+        <div className={cn(
+          'flex rounded-xl overflow-hidden border transition-opacity',
+          !isOn && 'opacity-20',
+          isOn ? 'border-white/10' : 'border-white/6'
+        )}>
+          {availableCT.map((preset, i) => {
+            const active = isOn && activePreset?.label === preset.label
+            return (
+              <button key={preset.label} onClick={() => setColorTemp(preset.kelvin)}
+                className={cn(
+                  'flex-1 py-2 text-[11px] font-medium transition-all',
+                  i > 0 && 'border-l',
+                  i > 0 && (isOn ? 'border-white/10' : 'border-white/6'),
+                  active
+                    ? 'bg-white/15 text-white'
+                    : 'bg-white/5 text-muted-foreground/60 hover:bg-white/10 hover:text-foreground'
+                )}
+              >
+                {preset.label}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -121,7 +116,6 @@ export function ColorLightCard({ entityId, label }) {
           </div>
         </div>
       )}
-
     </div>
   )
 }
