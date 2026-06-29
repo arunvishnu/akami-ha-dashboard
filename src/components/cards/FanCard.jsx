@@ -1,3 +1,4 @@
+import { Fan } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
@@ -119,10 +120,22 @@ export function FanCard({ entityId, label }) {
         : 'bg-zinc-900/80 border-white/8'
     )}>
       {/* Header */}
-      <div>
-        <div className="text-sm font-semibold">{name}</div>
-        <div className={cn('text-xs mt-0.5', isOn ? 'text-emerald-400/70' : 'text-muted-foreground/40')}>
-          {isOn ? `Speed ${speed} · ${percentage}%` : 'Fan is off'}
+      <div className="flex items-start gap-2">
+        <div className={cn(
+          'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300',
+          isOn ? 'bg-emerald-500/20' : 'bg-white/5'
+        )}>
+          <Fan className={cn(
+            'h-4 w-4 transition-all duration-300',
+            isOn ? 'text-emerald-400' : 'text-white/20',
+            isOn && 'animate-spin'
+          )} style={isOn ? { animationDuration: `${2 - (percentage / 100)}s` } : {}} />
+        </div>
+        <div>
+          <div className="text-sm font-semibold">{name}</div>
+          <div className={cn('text-xs mt-0.5', isOn ? 'text-emerald-400/70' : 'text-muted-foreground/40')}>
+            {isOn ? `Speed ${speed} · ${percentage}%` : 'Fan is off'}
+          </div>
         </div>
       </div>
 

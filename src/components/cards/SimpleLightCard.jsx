@@ -1,3 +1,4 @@
+import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
@@ -26,7 +27,7 @@ export function SimpleLightCard({ entityId, label }) {
           'h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300',
           isOn ? 'bg-amber-500/20' : 'bg-white/5'
         )}>
-          <span className={cn('text-2xl leading-none', !isOn && 'grayscale opacity-25')}>💡</span>
+          <Lightbulb className={cn('h-5 w-5 transition-all duration-300', isOn ? 'text-amber-300' : 'text-white/20')} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold truncate">{name}</div>

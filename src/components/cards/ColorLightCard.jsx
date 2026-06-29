@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
@@ -57,12 +58,24 @@ export function ColorLightCard({ entityId, label }) {
       style={glowStyle}
     >
       {/* Header */}
-      <div>
-        <div className="text-sm font-semibold">{name}</div>
-        <div className={cn('text-xs mt-0.5', isOn ? 'text-white/60' : 'text-muted-foreground/50')}>
-          {isOn
-            ? [activePreset?.label, currentFx && currentFx !== 'none' ? currentFx : null].filter(Boolean).join(' · ') || `${localBright}%`
-            : 'Light is off'}
+      <div className="flex items-start gap-2">
+        <div className={cn(
+          'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300',
+          isOn ? 'bg-white/10' : 'bg-white/5'
+        )}
+          style={isOn && rgb ? { backgroundColor: `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.15)` } : {}}
+        >
+          <Lightbulb className="h-4 w-4 transition-all duration-300"
+            style={{ color: isOn && rgb ? dotColor : 'rgba(255,255,255,0.2)' }}
+          />
+        </div>
+        <div>
+          <div className="text-sm font-semibold">{name}</div>
+          <div className={cn('text-xs mt-0.5', isOn ? 'text-white/60' : 'text-muted-foreground/50')}>
+            {isOn
+              ? [activePreset?.label, currentFx && currentFx !== 'none' ? currentFx : null].filter(Boolean).join(' · ') || `${localBright}%`
+              : 'Light is off'}
+          </div>
         </div>
       </div>
 

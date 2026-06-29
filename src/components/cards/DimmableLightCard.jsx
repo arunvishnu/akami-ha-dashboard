@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
@@ -47,9 +48,7 @@ export function DimmableLightCard({ entityId, label }) {
             ? 'bg-amber-400/20 shadow-[0_0_30px_rgba(251,191,36,0.3)]'
             : 'bg-white/5'
         )}>
-          <span className={cn('text-4xl leading-none transition-all', !isOn && 'grayscale opacity-20')}>
-            💡
-          </span>
+          <Lightbulb className={cn('h-8 w-8 transition-all duration-300', isOn ? 'text-amber-300' : 'text-white/15')} />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
 import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
@@ -45,10 +46,18 @@ export function HueLightCard({ entityId, label }) {
         : 'bg-zinc-900/80 border-white/8'
     )}>
       {/* Header */}
-      <div>
-        <div className="text-sm font-semibold">{name}</div>
-        <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
-          {isOn ? `${activePreset?.label ?? ''} · ${localBright}%` : 'Light is off'}
+      <div className="flex items-start gap-2">
+        <div className={cn(
+          'h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300',
+          isOn ? 'bg-amber-500/20' : 'bg-white/5'
+        )}>
+          <Lightbulb className={cn('h-4 w-4 transition-all duration-300', isOn ? 'text-amber-300' : 'text-white/20')} />
+        </div>
+        <div>
+          <div className="text-sm font-semibold">{name}</div>
+          <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
+            {isOn ? `${activePreset?.label ?? ''} · ${localBright}%` : 'Light is off'}
+          </div>
         </div>
       </div>
 
