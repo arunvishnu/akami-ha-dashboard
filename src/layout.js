@@ -16,7 +16,7 @@ export const ROOMS = {
     label: 'Family Room', icon: '🛋️', floor: 'first_floor',
     entities: {
       lights:      ['light.family_room'],
-      fan:         'fan.family_room_fan',
+      fan:         'fan.family_room_family_room_fan_fan',
       temperature: 'sensor.family_room_temperature',
       occupancy:   'binary_sensor.family_room_occupancy',
       media:       'media_player.family_room',

@@ -1,40 +1,44 @@
 import { useHA } from '../../hooks/useHA'
+import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
+
+const ACCENT = '#fbbf24'
 
 export function SimpleLightCard({ entityId, label }) {
   const { states, callService } = useHA()
-  const entity  = states[entityId]
-  const domain  = entityId?.split('.')[0]
-  const name    = label || entity?.attributes?.friendly_name || entityId
-  const isOn    = entity?.state === 'on'
+  const entity = states[entityId]
+  const domain = entityId?.split('.')[0]
+  const name   = label || entity?.attributes?.friendly_name || entityId
+  const isOn   = entity?.state === 'on'
 
   const toggle = () => callService(domain, 'toggle', { entity_id: entityId })
 
   return (
-    <div
-      onClick={toggle}
-      className={cn(
-        'rounded-xl border px-4 py-3 flex items-center justify-between gap-3 cursor-pointer transition-colors',
-        isOn ? 'bg-amber-950/15 border-amber-500/15' : 'bg-card border-border hover:bg-card/70'
-      )}
-    >
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span className={cn('text-base shrink-0', isOn ? 'opacity-100' : 'opacity-30')}>💡</span>
-        <div className="min-w-0">
-          <div className="text-sm font-medium truncate">{name}</div>
-          <div className="text-xs text-muted-foreground">{isOn ? 'On' : 'Off'}</div>
+    <div className={cn(
+      'rounded-2xl border p-4 flex flex-col gap-4 transition-all duration-300',
+      isOn
+        ? 'bg-amber-950/30 border-amber-500/20'
+        : 'bg-zinc-900/80 border-white/8'
+    )}>
+      {/* Icon + name */}
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          'h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300',
+          isOn ? 'bg-amber-500/20' : 'bg-white/5'
+        )}>
+          <span className={cn('text-2xl leading-none', !isOn && 'grayscale opacity-25')}>💡</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold truncate">{name}</div>
+          <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
+            {isOn ? 'On' : 'Off'}
+          </div>
         </div>
       </div>
 
-      {/* Toggle pill */}
-      <div className={cn(
-        'relative h-5 w-9 rounded-full transition-colors duration-200 shrink-0',
-        isOn ? 'bg-on' : 'bg-secondary'
-      )}>
-        <span className={cn(
-          'absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200',
-          isOn && 'translate-x-4'
-        )} />
+      {/* Power button */}
+      <div className="flex justify-center pt-1">
+        <CardPowerButton isOn={isOn} onClick={toggle} color={ACCENT} />
       </div>
     </div>
   )

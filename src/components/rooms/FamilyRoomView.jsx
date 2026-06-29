@@ -1,8 +1,8 @@
 import { useHA } from '../../hooks/useHA'
 import { ROOMS } from '../../layout'
 import { SmartLightCard } from '../cards/SmartLightCard'
+import { FanCard } from '../cards/FanCard'
 import { MediaCard } from '../MediaCard'
-import { EntityCard } from '../EntityCard'
 import { cn } from '../../lib/utils'
 
 const ROOM_ID = 'family_room'
@@ -157,7 +157,7 @@ export function FamilyRoomView() {
       {/* Lights */}
       <div>
         <SectionTitle>Lights</SectionTitle>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
           {lights.map(id => <SmartLightCard key={id} entityId={id} />)}
           {EXTRA_LIGHTS.map(({ id }) =>
             states[id] ? <SmartLightCard key={id} entityId={id} /> : null
@@ -169,7 +169,9 @@ export function FamilyRoomView() {
       {fan && (
         <div>
           <SectionTitle>Fan</SectionTitle>
-          <EntityCard entityId={fan} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            <FanCard entityId={fan} />
+          </div>
         </div>
       )}
 
@@ -190,7 +192,7 @@ export function FamilyRoomView() {
         <div>
           <SectionTitle>Switches</SectionTitle>
           <div className="flex flex-col gap-2">
-            {switches.map(id => <EntityCard key={id} entityId={id} />)}
+            {switches.map(id => <SmartLightCard key={id} entityId={id} forceType="simple" />)}
           </div>
         </div>
       )}

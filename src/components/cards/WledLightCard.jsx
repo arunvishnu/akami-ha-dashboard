@@ -1,8 +1,9 @@
-import { Power, Sparkles } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Sparkles } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
+import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
 
-// Curated subset shown by default; rest accessible via scroll
 const FEATURED_EFFECTS = [
   'Solid', 'Breathe', 'Rainbow', 'Fire 2012', 'Twinkle',
   'Colorloop', 'Ripple', 'Meteor', 'Aurora', 'Bpm',
@@ -11,125 +12,133 @@ const FEATURED_EFFECTS = [
 
 export function WledLightCard({ entityId, label }) {
   const { states, callService } = useHA()
-  const entity     = states[entityId]
-  const name       = label || entity?.attributes?.friendly_name || entityId
-  const isOn       = entity?.state === 'on'
-  const brightness = entity?.attributes?.brightness != null
+  const entity    = states[entityId]
+  const name      = label || entity?.attributes?.friendly_name || entityId
+  const isOn      = entity?.state === 'on'
+  const rawBright = entity?.attributes?.brightness != null
     ? Math.round((entity.attributes.brightness / 255) * 100)
-    : null
-  const rgb         = entity?.attributes?.rgb_color
-  const currentFx   = entity?.attributes?.effect
-  const effectList  = entity?.attributes?.effect_list ?? []
+    : 0
+  const rgb        = entity?.attributes?.rgb_color
+  const currentFx  = entity?.attributes?.effect
+  const effectList = entity?.attributes?.effect_list ?? []
 
-  // Show featured first, then rest (deduped)
+  const [localBright, setLocalBright] = useState(rawBright)
+  const [dragging, setDragging]       = useState(false)
+
+  useEffect(() => {
+    if (!dragging) setLocalBright(rawBright)
+  }, [rawBright, dragging])
+
+  const toggle       = () => callService('light', 'toggle', { entity_id: entityId })
+  const commitBright = (v) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: v })
+  const setEffect    = (fx) => callService('light', 'turn_on', { entity_id: entityId, effect: fx })
+
   const featured = FEATURED_EFFECTS.filter(e => effectList.includes(e))
   const rest     = effectList.filter(e => !FEATURED_EFFECTS.includes(e))
   const displayEffects = [...featured, ...rest]
 
-  // Derive glow color from current rgb
-  const glowStyle = isOn && rgb
-    ? { boxShadow: `0 0 24px rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.15)` }
-    : {}
-  const rgbBorder = isOn && rgb
-    ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.25)`
-    : undefined
-
-  const toggle   = () => callService('light', 'toggle', { entity_id: entityId })
-  const setBright = (v) => callService('light', 'turn_on', { entity_id: entityId, brightness_pct: v })
-  const setEffect = (fx) => callService('light', 'turn_on', { entity_id: entityId, effect: fx })
-
-  const dotColor = rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : '#fbbf24'
+  const dotColor    = isOn && rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : '#a78bfa'
+  const glowStyle   = isOn && rgb ? { boxShadow: `0 0 28px rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.15)` } : {}
+  const borderColor = isOn && rgb ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.25)` : 'rgba(255,255,255,0.08)'
 
   return (
     <div
       className={cn(
-        'rounded-2xl border p-4 flex flex-col gap-3 transition-all duration-300',
-        isOn ? 'bg-card/80' : 'bg-card border-border'
+        'rounded-2xl border p-4 flex flex-col gap-4 transition-all duration-300',
+        isOn ? 'bg-zinc-900/90' : 'bg-zinc-900/80'
       )}
-      style={isOn ? { borderColor: rgbBorder ?? 'rgba(255,255,255,0.12)', ...glowStyle } : {}}
+      style={{ borderColor, ...glowStyle }}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-muted-foreground/60 shrink-0" />
-            <div className="text-sm font-semibold truncate">{name}</div>
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {isOn && rgb && (
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: dotColor }}
-              />
-            )}
-            <div className="text-xs text-muted-foreground truncate">
-              {isOn ? (currentFx && currentFx !== 'Solid' ? currentFx : brightness != null ? `${brightness}%` : 'On') : 'Off'}
-            </div>
+      <div>
+        <div className="flex items-center gap-1.5">
+          <Sparkles className={cn('h-3 w-3 shrink-0', isOn ? 'text-violet-400' : 'text-muted-foreground/30')} />
+          <div className="text-sm font-semibold truncate">{name}</div>
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {isOn && rgb && (
+            <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
+          )}
+          <div className={cn('text-xs truncate', isOn ? 'text-white/60' : 'text-muted-foreground/40')}>
+            {isOn
+              ? (currentFx && currentFx !== 'Solid' ? currentFx : `${localBright}% · Solid`)
+              : 'Strip is off'}
           </div>
         </div>
-        <button
-          onClick={toggle}
-          className={cn(
-            'h-9 w-9 rounded-full border flex items-center justify-center shrink-0 transition-all',
-            isOn
-              ? 'border-white/20 bg-white/10 text-white'
-              : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
-          )}
-          style={isOn && rgb ? { borderColor: rgbBorder, color: dotColor } : {}}
-        >
-          <Power className="h-4 w-4" />
-        </button>
       </div>
 
-      {isOn && (
-        <>
-          {/* Brightness */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground/40">1</span>
-            <input
-              type="range"
-              min={1}
-              max={100}
-              value={brightness ?? 0}
-              onChange={(e) => setBright(Number(e.target.value))}
-              className="flex-1 h-1.5 cursor-pointer"
-              style={{ accentColor: dotColor }}
+      {/* Color swatch strip */}
+      <div className={cn(
+        'h-10 rounded-xl overflow-hidden transition-all duration-500',
+        isOn && rgb ? 'opacity-100' : 'opacity-10'
+      )}>
+        {isOn && rgb
+          ? (
+            <div
+              className="w-full h-full rounded-xl"
+              style={{
+                background: `linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.3), rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.7), rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.3))`,
+              }}
             />
-            <span className="text-[10px] text-muted-foreground/60 w-7 text-right">
-              {brightness ?? 0}%
-            </span>
-          </div>
+          )
+          : (
+            <div className="w-full h-full rounded-xl bg-gradient-to-r from-violet-500/20 via-pink-500/20 to-amber-500/20" />
+          )
+        }
+      </div>
 
-          {/* Effects */}
-          {displayEffects.length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-1.5">
-                Effects
-              </div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {displayEffects.map(fx => (
-                  <button
-                    key={fx}
-                    onClick={() => setEffect(fx)}
-                    className={cn(
-                      'rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0 whitespace-nowrap',
-                      currentFx === fx
-                        ? 'text-white ring-1'
-                        : 'bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground'
-                    )}
-                    style={currentFx === fx
-                      ? { backgroundColor: `rgba(${rgb?.[0]??251},${rgb?.[1]??191},${rgb?.[2]??36},0.25)`, ringColor: dotColor, borderColor: dotColor }
-                      : {}
-                    }
-                  >
-                    {fx}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+      {/* Brightness slider */}
+      <div className={cn('flex items-center gap-2 transition-opacity', !isOn && 'opacity-20')}>
+        <span className="text-base shrink-0">🔅</span>
+        <input
+          type="range"
+          min={1}
+          max={100}
+          value={localBright || 1}
+          onChange={(e) => { setDragging(true); setLocalBright(Number(e.target.value)) }}
+          onMouseUp={(e)  => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
+          onTouchEnd={(e) => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
+          className="flex-1 cursor-pointer"
+          style={{ height: '6px', accentColor: dotColor }}
+        />
+        <span className="text-[10px] text-muted-foreground/50 w-7 text-right tabular-nums">
+          {localBright}%
+        </span>
+      </div>
+
+      {/* Effects */}
+      {displayEffects.length > 0 && (
+        <div className={cn('transition-opacity', !isOn && 'opacity-20')}>
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-1.5">
+            Effects
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {displayEffects.map(fx => (
+              <button
+                key={fx}
+                onClick={() => setEffect(fx)}
+                className={cn(
+                  'rounded-lg px-2.5 py-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap transition-all',
+                  isOn && currentFx === fx
+                    ? 'text-white ring-1'
+                    : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
+                )}
+                style={isOn && currentFx === fx
+                  ? { backgroundColor: `rgba(${rgb?.[0]??167},${rgb?.[1]??139},${rgb?.[2]??250},0.2)`, ringColor: dotColor }
+                  : {}
+                }
+              >
+                {fx}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
+
+      {/* Power button */}
+      <div className="flex justify-center pt-1">
+        <CardPowerButton isOn={isOn} onClick={toggle} color={dotColor} />
+      </div>
     </div>
   )
 }
