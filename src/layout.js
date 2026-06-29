@@ -86,8 +86,8 @@ export const ROOMS = {
   master_bedroom: {
     label: 'Master Bedroom', icon: '🛏️', floor: 'second_floor',
     entities: {
-      lights:  ['light.master_bedroom'],
-      fan:     'fan.master_bedroom_fan',
+      lights:  ['light.master_bedroom', 'light.master_bedroom_master_bedroom_fan_light'],
+      fan:     'fan.master_bedroom_master_bedroom_fan_fan',
       media:   'media_player.bedroom_tv',
       scenes:  ['scene.master_bedroom_bright','scene.master_bedroom_relax','scene.master_bedroom_dimmed','scene.master_bedroom_nightlight','scene.master_bedroom_concentrate'],
     },
