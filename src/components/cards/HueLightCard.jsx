@@ -8,10 +8,10 @@ import { cn } from '../../lib/utils'
 const ACCENT = '#fbbf24'
 
 const PRESETS = [
-  { label: 'Candle',  kelvin: 2200, icon: '🕯️' },
-  { label: 'Warm',    kelvin: 2700, icon: '🔆' },
-  { label: 'Natural', kelvin: 4000, icon: '☀️' },
-  { label: 'Cool',    kelvin: 6500, icon: '❄️' },
+  { label: 'Candle',  kelvin: 2200 },
+  { label: 'Warm',    kelvin: 2700 },
+  { label: 'Natural', kelvin: 4000 },
+  { label: 'Cool',    kelvin: 6500 },
 ]
 
 export function HueLightCard({ entityId, label }) {
@@ -53,13 +53,13 @@ export function HueLightCard({ entityId, label }) {
       <div className="text-center">
         <div className="text-sm font-semibold">{name}</div>
         <div className={cn('text-xs mt-0.5', isOn ? 'text-amber-400/70' : 'text-muted-foreground/40')}>
-          {isOn ? `${activePreset?.label ?? ''} · ${localBright}%` : 'Light is off'}
+          {isOn ? `${activePreset?.label ?? 'Custom'} · ${localBright}%` : 'Light is off'}
         </div>
       </div>
 
-      {/* Slider */}
+      {/* Brightness slider */}
       <div className={cn('flex items-center gap-2 transition-opacity', !isOn && 'opacity-20')}>
-        <span className="text-[10px] text-muted-foreground/40 w-4 text-right shrink-0">1</span>
+        <span className="text-[10px] text-muted-foreground/40 shrink-0">1%</span>
         <input
           type="range" min={1} max={100} value={localBright || 1}
           onChange={(e) => { setDragging(true); setLocalBright(Number(e.target.value)) }}
@@ -67,25 +67,32 @@ export function HueLightCard({ entityId, label }) {
           onTouchEnd={(e) => { setDragging(false); commitBright(Number(e.currentTarget.value)) }}
           className="flex-1 accent-amber-400 cursor-pointer" style={{ height: '6px' }}
         />
-        <span className="text-[10px] text-muted-foreground/40 w-6 shrink-0">100</span>
+        <span className="text-[10px] text-muted-foreground/40 shrink-0 w-7 text-right tabular-nums">
+          {localBright}%
+        </span>
       </div>
 
-      {/* Color temp presets */}
+      {/* Color temp segmented strip */}
       {availablePresets.length > 0 && (
-        <div className={cn('grid grid-cols-4 gap-1.5 transition-opacity', !isOn && 'opacity-20')}>
-          {availablePresets.map(preset => {
+        <div className={cn('flex rounded-xl overflow-hidden border transition-opacity', !isOn && 'opacity-20',
+          isOn ? 'border-white/10' : 'border-white/6'
+        )}>
+          {availablePresets.map((preset, i) => {
             const active = isOn && activePreset?.label === preset.label
             return (
-              <button key={preset.label} onClick={() => setColorTemp(preset.kelvin)}
+              <button
+                key={preset.label}
+                onClick={() => setColorTemp(preset.kelvin)}
                 className={cn(
-                  'rounded-xl py-2.5 flex flex-col items-center gap-1 text-[10px] font-medium transition-all',
+                  'flex-1 py-2 text-[11px] font-medium transition-all',
+                  i > 0 && 'border-l',
+                  i > 0 && (isOn ? 'border-white/10' : 'border-white/6'),
                   active
-                    ? 'bg-amber-500/25 text-amber-300 ring-1 ring-amber-500/40'
-                    : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+                    ? 'bg-amber-500/25 text-amber-300'
+                    : 'bg-white/5 text-muted-foreground/60 hover:bg-white/10 hover:text-foreground'
                 )}
               >
-                <span className={cn('text-base leading-none', !isOn && 'grayscale opacity-40')}>{preset.icon}</span>
-                <span>{preset.label}</span>
+                {preset.label}
               </button>
             )
           })}
