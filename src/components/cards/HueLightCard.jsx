@@ -1,6 +1,5 @@
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
-import { CardPowerButton } from './CardPowerButton'
 import { cn } from '../../lib/utils'
 
 const ACCENT      = '#fbbf24'
@@ -28,7 +27,7 @@ function arcPath(cx, cy, r, startAngle, sweepAngle) {
   return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${r} ${r} 0 ${capped > 180 ? 1 : 0} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`
 }
 
-function BrightnessDial({ brightness, isOn, onDecrease, onIncrease }) {
+function BrightnessDial({ brightness, isOn, onToggle, onDecrease, onIncrease }) {
   const cx = 100, cy = 100, r = 72
   const activeSweep = SWEEP * Math.max(0, brightness) / 100
   const dot = polarToXY(cx, cy, r, START_ANGLE + activeSweep)
@@ -47,20 +46,17 @@ function BrightnessDial({ brightness, isOn, onDecrease, onIncrease }) {
       >−</button>
 
       {/* SVG arc + icon overlay */}
-      <div className="relative w-44 h-44 shrink-0">
+      <div className="relative w-52 h-52 shrink-0">
         <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full">
-          {/* Outer glow ring */}
           {isOn && (
             <circle cx={cx} cy={cy} r={r + 4} fill="none"
               stroke={ACCENT} strokeWidth={1} strokeOpacity={0.08} />
           )}
-          {/* Background track */}
           <path
             d={arcPath(cx, cy, r, START_ANGLE, SWEEP)}
             fill="none" stroke="rgba(255,255,255,0.07)"
             strokeWidth={10} strokeLinecap="round"
           />
-          {/* Active arc */}
           {isOn && activeSweep > 0 && (
             <path
               d={arcPath(cx, cy, r, START_ANGLE, activeSweep)}
@@ -69,27 +65,27 @@ function BrightnessDial({ brightness, isOn, onDecrease, onIncrease }) {
               style={{ filter: `drop-shadow(0 0 5px ${ACCENT}90)` }}
             />
           )}
-          {/* Indicator dot */}
           {isOn && brightness > 0 && (
             <circle cx={dot.x} cy={dot.y} r={7} fill={ACCENT}
               style={{ filter: `drop-shadow(0 0 6px ${ACCENT})` }} />
           )}
         </svg>
 
-        {/* Bulb icon centered over SVG */}
+        {/* Bulb icon — tap to toggle */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="h-16 w-16 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+          <button
+            onClick={onToggle}
+            className="h-28 w-28 rounded-full border-2 flex items-center justify-center transition-all duration-300"
             style={{
               borderColor: isOn ? ACCENT : 'rgba(255,255,255,0.12)',
-              boxShadow:   isOn ? `0 0 20px ${ACCENT}55` : 'none',
+              boxShadow:   isOn ? `0 0 28px ${ACCENT}55` : 'none',
             }}
           >
             <Lightbulb
-              className="h-7 w-7 transition-all duration-300"
+              className="h-12 w-12 transition-all duration-300"
               style={{ color: isOn ? ACCENT : 'rgba(255,255,255,0.25)' }}
             />
-          </div>
+          </button>
         </div>
       </div>
 
@@ -142,6 +138,7 @@ export function HueLightCard({ entityId, label }) {
       <BrightnessDial
         brightness={brightness}
         isOn={isOn}
+        onToggle={toggle}
         onDecrease={decrease}
         onIncrease={increase}
       />
@@ -183,10 +180,6 @@ export function HueLightCard({ entityId, label }) {
         </div>
       )}
 
-      {/* Power button */}
-      <div className="flex justify-center pt-1">
-        <CardPowerButton isOn={isOn} onClick={toggle} color={ACCENT} />
-      </div>
     </div>
   )
 }

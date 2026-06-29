@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Sparkles } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
-import { CardPowerButton } from './CardPowerButton'
+
 import { CardDeviceIcon } from './CardDeviceIcon'
 import { cn } from '../../lib/utils'
 
@@ -48,7 +48,7 @@ export function WledLightCard({ entityId, label }) {
       style={{ borderColor, ...glowStyle }}
     >
       {/* Icon */}
-      <CardDeviceIcon icon={Sparkles} isOn={isOn} color={dotColor} />
+      <CardDeviceIcon icon={Sparkles} isOn={isOn} color={dotColor} onClick={toggle} />
 
       {/* Name + status */}
       <div className="text-center">
@@ -118,10 +118,6 @@ export function WledLightCard({ entityId, label }) {
         </div>
       )}
 
-      {/* Power button */}
-      <div className="flex justify-center pt-1">
-        <CardPowerButton isOn={isOn} onClick={toggle} color={dotColor} />
-      </div>
     </div>
   )
 }

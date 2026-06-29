@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { useHA } from '../../hooks/useHA'
-import { CardPowerButton } from './CardPowerButton'
+
 import { CardDeviceIcon } from './CardDeviceIcon'
 import { cn } from '../../lib/utils'
 
@@ -31,7 +31,7 @@ export function DimmableLightCard({ entityId, label }) {
         : 'bg-zinc-900/80 border-white/8'
     )}>
       {/* Icon */}
-      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={ACCENT} />
+      <CardDeviceIcon icon={Lightbulb} isOn={isOn} color={ACCENT} onClick={toggle} />
 
       {/* Name + status */}
       <div className="text-center">
@@ -55,10 +55,6 @@ export function DimmableLightCard({ entityId, label }) {
         <span className="text-[10px] text-muted-foreground/50 w-7 text-right tabular-nums">{localBright}%</span>
       </div>
 
-      {/* Power button */}
-      <div className="flex justify-center pt-1">
-        <CardPowerButton isOn={isOn} onClick={toggle} color={ACCENT} />
-      </div>
     </div>
   )
 }
