@@ -63,7 +63,7 @@ function SpeedDial({ percentage, isOn, onToggle, onCommit }) {
 
   const display      = dragging ? local : percentage
   const activeSweep  = SWEEP * Math.max(0, display) / 100
-  const dot          = polarToXY(100, 100, 72, START_ANGLE + activeSweep)
+  const dot          = polarToXY(100, 100, 82, START_ANGLE + activeSweep)
   const speed        = display > 0 ? Math.round(display / STEP) : 0
   const maxSpeed     = Math.ceil(100 / STEP)
   const spinDuration = isOn && percentage > 0 ? `${1.5 - (percentage / 100)}s` : '1.5s'
@@ -79,18 +79,18 @@ function SpeedDial({ percentage, isOn, onToggle, onCommit }) {
         onPointerUp={handlePointerUp}
       >
         {isOn && (
-          <circle cx={100} cy={100} r={76} fill="none"
+          <circle cx={100} cy={100} r={86} fill="none"
             stroke={ACCENT} strokeWidth={1} strokeOpacity={0.08} />
         )}
         {/* Background track — wider for easier hit */}
         <path
-          d={arcPath(100, 100, 72, START_ANGLE, SWEEP)}
+          d={arcPath(100, 100, 82, START_ANGLE, SWEEP)}
           fill="none" stroke="rgba(255,255,255,0.07)"
           strokeWidth={14} strokeLinecap="round"
         />
         {isOn && activeSweep > 0 && (
           <path
-            d={arcPath(100, 100, 72, START_ANGLE, activeSweep)}
+            d={arcPath(100, 100, 82, START_ANGLE, activeSweep)}
             fill="none" stroke={ACCENT}
             strokeWidth={10} strokeLinecap="round"
             style={{ filter: `drop-shadow(0 0 5px ${ACCENT}90)` }}

@@ -72,7 +72,7 @@ function BrightnessDial({ brightness, isOn, onToggle, onCommit, onDecrease, onIn
 
   const display     = dragging ? local : brightness
   const activeSweep = SWEEP * Math.max(0, display) / 100
-  const dot         = polarToXY(100, 100, 72, START_ANGLE + activeSweep)
+  const dot         = polarToXY(100, 100, 82, START_ANGLE + activeSweep)
 
   return (
     <div className="flex items-center justify-between gap-2 px-2">
@@ -98,19 +98,19 @@ function BrightnessDial({ brightness, isOn, onToggle, onCommit, onDecrease, onIn
           onPointerUp={handlePointerUp}
         >
           {isOn && (
-            <circle cx={100} cy={100} r={76} fill="none"
+            <circle cx={100} cy={100} r={86} fill="none"
               stroke={ACCENT} strokeWidth={1} strokeOpacity={0.08} />
           )}
           {/* Background track — wider hit area */}
           <path
-            d={arcPath(100, 100, 72, START_ANGLE, SWEEP)}
+            d={arcPath(100, 100, 82, START_ANGLE, SWEEP)}
             fill="none" stroke="rgba(255,255,255,0.07)"
             strokeWidth={14} strokeLinecap="round"
           />
           {/* Active arc */}
           {isOn && activeSweep > 0 && (
             <path
-              d={arcPath(100, 100, 72, START_ANGLE, activeSweep)}
+              d={arcPath(100, 100, 82, START_ANGLE, activeSweep)}
               fill="none" stroke={ACCENT}
               strokeWidth={10} strokeLinecap="round"
               style={{ filter: `drop-shadow(0 0 5px ${ACCENT}90)` }}
