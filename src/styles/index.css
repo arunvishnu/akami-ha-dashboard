@@ -77,3 +77,22 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.5);
   }
 }
+
+/* Tilted 3D view for the to-scale SVG floor plans */
+.floorplan-tilt-stage {
+  perspective: 1600px;
+  perspective-origin: 50% 0%;
+  padding-bottom: 1.5rem;
+}
+
+.floorplan-tilt-svg {
+  transform: rotateX(42deg);
+  transform-origin: 50% 100%;
+  transition: transform 0.35s ease, filter 0.35s ease;
+  filter: drop-shadow(0 26px 18px rgba(0, 0, 0, 0.4));
+}
+
+.floorplan-tilt-svg.floorplan-tilt-svg--flat {
+  transform: none;
+  filter: none;
+}

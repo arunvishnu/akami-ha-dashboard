@@ -5,6 +5,8 @@ import { HomeTab } from './tabs/HomeTab'
 import { FloorTab } from './tabs/FloorTab'
 import { FirstFloorTab } from './tabs/FirstFloorTab'
 import { SecondFloorTab } from './tabs/SecondFloorTab'
+import { OutdoorTab } from './tabs/OutdoorTab'
+import { BasementTab } from './tabs/BasementTab'
 import { RoomsTab } from './tabs/RoomsTab'
 import { WeatherTab } from './tabs/WeatherTab'
 import { ClimateTab } from './tabs/ClimateTab'
@@ -58,7 +60,9 @@ export function Dashboard({ onReset }) {
         {activeTab === 'media'        && <MediaTab />}
         {activeTab === 'first_floor'  && <FirstFloorTab />}
         {activeTab === 'second_floor' && <SecondFloorTab />}
-        {!['home','rooms','weather','climate','media','first_floor','second_floor'].includes(activeTab) && <FloorTab floorId={activeTab} />}
+        {activeTab === 'outdoor'      && <OutdoorTab />}
+        {activeTab === 'basement'     && <BasementTab />}
+        {!['home','rooms','weather','climate','media','first_floor','second_floor','outdoor','basement'].includes(activeTab) && <FloorTab floorId={activeTab} />}
       </main>
     </div>
   )
