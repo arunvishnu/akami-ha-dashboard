@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useHA } from '../../hooks/useHA'
-import { ROOMS } from '../../layout'
+import { ROOMS, FLOORS } from '../../layout'
 import { FamilyRoomView } from '../rooms/FamilyRoomView'
 import { OfficeView } from '../rooms/OfficeView'
 import { MasterBedroomView } from '../rooms/MasterBedroomView'
@@ -9,45 +9,6 @@ import { RoomDetail } from '../RoomDetail'
 import { cn } from '../../lib/utils'
 
 const FLOOR_ORDER = ['first_floor', 'second_floor', 'outdoor', 'basement']
-const FLOOR_LABELS = {
-  first_floor:  '1st Floor',
-  second_floor: '2nd Floor',
-  outdoor:      'Outdoor',
-  basement:     'Basement',
-}
-
-function RoomSidebarItem({ roomId, room, isSelected, onClick, states }) {
-  const { lights = [], switches = [], fan, occupancy, temperature } = room.entities
-  const lightsOn = [...lights, ...switches].filter(id => states[id]?.state === 'on').length
-  const fanOn    = fan ? states[fan]?.state === 'on' : false
-  const isLit    = lightsOn > 0 || fanOn
-  const isOccupied = occupancy ? states[occupancy]?.state === 'on' : null
-  const tempState  = temperature ? states[temperature] : null
-  const tempVal    = tempState ? `${Math.round(parseFloat(tempState.state))}°` : null
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'w-full text-left px-3 py-2.5 flex flex-col gap-0.5 border-b border-border/30 transition-colors border-l-2',
-        isSelected
-          ? 'bg-amber-500/10 border-l-amber-500/80 text-amber-400'
-          : 'border-l-transparent hover:bg-white/5 text-foreground/80'
-      )}
-    >
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-xs font-medium truncate leading-tight">{room.label}</span>
-        <div className="flex gap-1 items-center shrink-0">
-          {isLit && <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />}
-          {isOccupied === true && <span className="h-1.5 w-1.5 rounded-full bg-amber-300/50" />}
-        </div>
-      </div>
-      {tempVal && (
-        <span className="text-[10px] text-muted-foreground">{tempVal}</span>
-      )}
-    </button>
-  )
-}
 
 // Rooms with custom views — others fall back to embedded RoomDetail
 const GENERIC_ROOMS = [
@@ -63,40 +24,86 @@ const CUSTOM_VIEWS = {
   ...Object.fromEntries(GENERIC_ROOMS.map(id => [id, () => <GenericRoomView roomId={id} />])),
 }
 
+function RoomChip({ room, isSelected, onClick, states }) {
+  const { lights = [], switches = [], fan, occupancy } = room.entities
+  const lightsOn = [...lights, ...switches].filter(id => states[id]?.state === 'on').length
+  const fanOn    = fan ? states[fan]?.state === 'on' : false
+  const isLit    = lightsOn > 0 || fanOn
+  const isOccupied = occupancy ? states[occupancy]?.state === 'on' : false
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors border shrink-0',
+        isSelected
+          ? 'bg-on/15 border-on/50 text-on font-semibold'
+          : 'bg-card border-border text-foreground/80 hover:bg-card/80'
+      )}
+    >
+      <span className="text-base leading-none">{room.icon}</span>
+      <span>{room.label}</span>
+      {isLit && <span className="h-1.5 w-1.5 rounded-full bg-on shrink-0" />}
+      {isOccupied && <span className="h-1.5 w-1.5 rounded-full bg-on/40 shrink-0" />}
+    </button>
+  )
+}
+
 export function RoomsTab() {
   const { states } = useHA()
-  const [selectedRoom, setSelectedRoom] = useState('family_room')
 
-  const grouped = FLOOR_ORDER
-    .map(floorId => ({
-      floorId,
-      label: FLOOR_LABELS[floorId],
-      rooms: Object.entries(ROOMS).filter(([, r]) => r.floor === floorId),
+  const floors = FLOOR_ORDER
+    .map(id => FLOORS.find(f => f.id === id))
+    .filter(Boolean)
+    .map(floor => ({
+      ...floor,
+      rooms: Object.entries(ROOMS).filter(([, r]) => r.floor === floor.id),
     }))
-    .filter(g => g.rooms.length > 0)
+    .filter(floor => floor.rooms.length > 0)
+
+  const [selectedFloor, setSelectedFloor] = useState(floors[0]?.id)
+  const currentFloor = floors.find(f => f.id === selectedFloor) || floors[0]
+  const [selectedRoom, setSelectedRoom] = useState(currentFloor?.rooms[0]?.[0])
+
+  const handleFloorChange = (floorId) => {
+    setSelectedFloor(floorId)
+    const floor = floors.find(f => f.id === floorId)
+    setSelectedRoom(floor?.rooms[0]?.[0])
+  }
 
   const CustomView = CUSTOM_VIEWS[selectedRoom]
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-[118px] border-r border-border overflow-y-auto shrink-0 flex flex-col bg-card/20">
-        {grouped.map(({ floorId, label, rooms }) => (
-          <div key={floorId}>
-            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 sticky top-0 bg-background/90 backdrop-blur-sm">
-              {label}
-            </div>
-            {rooms.map(([roomId, room]) => (
-              <RoomSidebarItem
-                key={roomId}
-                roomId={roomId}
-                room={room}
-                isSelected={selectedRoom === roomId}
-                onClick={() => setSelectedRoom(roomId)}
-                states={states}
-              />
-            ))}
-          </div>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Floor picker */}
+      <div className="flex items-center gap-1.5 px-3 pt-3 pb-2 overflow-x-auto shrink-0">
+        {floors.map((floor) => (
+          <button
+            key={floor.id}
+            onClick={() => handleFloorChange(floor.id)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 text-sm whitespace-nowrap rounded-md transition-colors border shrink-0',
+              currentFloor?.id === floor.id
+                ? 'bg-background text-foreground font-semibold border-on/40 shadow-sm'
+                : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-card'
+            )}
+          >
+            <span className="text-base leading-none">{floor.icon}</span>
+            <span>{floor.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Room picker */}
+      <div className="flex items-center gap-1.5 px-3 pb-3 overflow-x-auto shrink-0 border-b border-border">
+        {currentFloor?.rooms.map(([roomId, room]) => (
+          <RoomChip
+            key={roomId}
+            room={room}
+            isSelected={selectedRoom === roomId}
+            onClick={() => setSelectedRoom(roomId)}
+            states={states}
+          />
         ))}
       </div>
 
