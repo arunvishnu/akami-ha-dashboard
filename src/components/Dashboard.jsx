@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useHA } from '../hooks/useHA'
 import { TabBar } from './TabBar'
 import { HomeTab } from './tabs/HomeTab'
+import { ActiveTab } from './tabs/ActiveTab'
 import { FloorTab } from './tabs/FloorTab'
 import { FirstFloorTab } from './tabs/FirstFloorTab'
 import { SecondFloorTab } from './tabs/SecondFloorTab'
@@ -54,6 +55,7 @@ export function Dashboard({ onReset }) {
 
       <main className={cn('flex-1 min-h-0', activeTab === 'rooms' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto')}>
         {activeTab === 'home'         && <HomeTab onNavigate={setActiveTab} />}
+        {activeTab === 'active'       && <ActiveTab />}
         {activeTab === 'rooms'        && <RoomsTab />}
         {activeTab === 'weather'      && <WeatherTab />}
         {activeTab === 'climate'      && <ClimateTab />}
@@ -62,7 +64,7 @@ export function Dashboard({ onReset }) {
         {activeTab === 'second_floor' && <SecondFloorTab />}
         {activeTab === 'outdoor'      && <OutdoorTab />}
         {activeTab === 'basement'     && <BasementTab />}
-        {!['home','rooms','weather','climate','media','first_floor','second_floor','outdoor','basement'].includes(activeTab) && <FloorTab floorId={activeTab} />}
+        {!['home','active','rooms','weather','climate','media','first_floor','second_floor','outdoor','basement'].includes(activeTab) && <FloorTab floorId={activeTab} />}
       </main>
     </div>
   )

@@ -1,5 +1,6 @@
 export const FLOORS = [
   { id: 'home',         label: 'Home',      icon: '🏠' },
+  { id: 'active',       label: 'Active',    icon: '⚡' },
   { id: 'rooms',        label: 'Rooms',     icon: '🛋️' },
   { id: 'weather',      label: 'Weather',   icon: '🌤️' },
   { id: 'climate',      label: 'Climate',   icon: '🌡️' },
